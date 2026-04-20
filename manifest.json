@@ -1,0 +1,16 @@
+{
+  "name": "GPC Generator",
+  "short_name": "GPC",
+  "description": "Генератор промптов с облачными модами",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0b0f",
+  "theme_color": "#ff00aa",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1055/1055683.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
