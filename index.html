@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧬 GPC Generator</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0b0f">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, sans-serif; margin: 0; padding: 20px; background: #0b0b0f; color: #e3e3e8; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { margin-bottom: 5px; }
+        .sub { color: #aaa; margin-bottom: 20px; }
+        
+        .tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid #f0a; padding-bottom: 10px; flex-wrap: wrap; }
+        .tab-btn { background: #2c2c3a; border: none; color: #ccc; padding: 10px 20px; border-radius: 30px; cursor: pointer; }
+        .tab-btn.active { background: #f0a; color: white; }
+        
+        .panel { display: none; }
+        .panel.active { display: block; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
+        .card { background: #1e1e2a; border-radius: 20px; padding: 20px; }
+        .card h3 { margin-top: 0; border-left: 4px solid #f0a; padding-left: 15px; }
+        
+        select, input, button { width: 100%; padding: 12px; border-radius: 12px; background: #2c2c3a; color: white; border: 1px solid #4a4a60; margin-bottom: 10px; font-size: 16px; }
+        button { background: #f0a; border: none; font-weight: bold; cursor: pointer; }
+        button.secondary { background: #3a3a5a; }
+        
+        .big-btn { padding: 20px; font-size: 20px; margin-bottom: 15px; }
+        
+        .prompt-box { background: #000; padding: 20px; border-radius: 16px; font-family: monospace; font-size: 14px; margin: 20px 0; }
+        
+        .mod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
+        .mod-card { background: #1e1e2a; border-radius: 16px; padding: 15px; border: 1px solid #3a3a5a; }
+        .mod-card.installed { border-color: #0a0; }
+        .mod-card h4 { margin: 0 0 10px 0; }
+        .mod-card p { margin: 5px 0; color: #aaa; font-size: 14px; }
+        .mod-card button { padding: 8px; font-size: 14px; }
+        
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #f0a; color: white; padding: 15px 25px; border-radius: 40px; opacity: 0; transition: 0.3s; z-index: 9999; }
+        .toast.show { opacity: 1; }
+        
+        .category-tabs { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 20px; }
+        .cat-btn { background: #2c2c3a; border: none; color: #ccc; padding: 8px 16px; border-radius: 30px; cursor: pointer; }
+        .cat-btn.active { background: #f0a; color: white; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧬 GPC Generator v1.0</h1>
+    <div class="sub">☁️ Облачные моды • Офлайн работа • PWA</div>
+    
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="quick">⚡ Быстрый старт</button>
+        <button class="tab-btn" data-tab="library">📚 Библиотека модов</button>
+        <button class="tab-btn" data-tab="constructor">🛠️ Конструктор</button>
+        <button class="tab-btn" data-tab="mymods">📁 Мои моды</button>
+        <button class="tab-btn" data-tab="settings">⚙️ Настройки</button>
+    </div>
+    
+    <!-- БЫСТРЫЙ СТАРТ -->
+    <div id="quick" class="panel active">
+        <div class="grid">
+            <div class="card">
+                <h3>🎲 Случайный персонаж</h3>
+                <p style="color:#aaa">Одно нажатие — готовый промпт</p>
+                <button class="big-btn" id="randomBtn">🎲 СГЕНЕРИРОВАТЬ</button>
+                <button class="secondary" id="quickPreset1">🦄 Пони (MLP)</button>
+                <button class="secondary" id="quickPreset2">👙 Соблазнительная</button>
+                <button class="secondary" id="quickPreset3">🖤 Альтушка</button>
+            </div>
+            <div class="card">
+                <h3>✨ Результат</h3>
+                <div class="prompt-box" id="quickPrompt">Нажмите кнопку...</div>
+                <button id="copyQuickBtn">📋 Копировать промпт</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- БИБЛИОТЕКА МОДОВ -->
+    <div id="library" class="panel">
+        <div class="category-tabs">
+            <button class="cat-btn active" data-cat="all">Все</button>
+            <button class="cat-btn" data-cat="mlp">🦄 MLP</button>
+            <button class="cat-btn" data-cat="anthro">🐾 Антропо</button>
+            <button class="cat-btn" data-cat="lingerie">👙 Бельё</button>
+            <button class="cat-btn" data-cat="faces">🎨 Лица</button>
+            <button class="cat-btn" data-cat="anime">🌸 Аниме</button>
+        </div>
+        <div id="modsList" class="mod-grid">Загрузка библиотеки...</div>
+    </div>
+    
+    <!-- КОНСТРУКТОР -->
+    <div id="constructor" class="panel">
+        <div class="grid">
+            <div class="card">
+                <h3>👤 Персонаж</h3>
+                <label>Тип:</label>
+                <select id="charType">
+                    <option value="human">Человек</option>
+                    <option value="pony">Пони (MLP)</option>
+                    <option value="anthro">Антропо</option>
+                    <option value="demon">Демон</option>
+                    <option value="elf">Эльф</option>
+                </select>
+                <label>Стиль:</label>
+                <select id="charStyle">
+                    <option value="anime">Аниме</option>
+                    <option value="realistic">Реалистичный</option>
+                    <option value="alt">Альт</option>
+                    <option value="fantasy">Фэнтези</option>
+                </select>
+            </div>
+            <div class="card">
+                <h3>👗 Одежда</h3>
+                <label>Тип:</label>
+                <select id="charOutfit">
+                    <option value="none">Без одежды</option>
+                    <option value="lingerie">Нижнее бельё</option>
+                    <option value="casual">Повседневная</option>
+                    <option value="fantasy">Фэнтези</option>
+                </select>
+                <label>Настроение:</label>
+                <select id="charMood">
+                    <option value="cute">Милое</option>
+                    <option value="sexy">Соблазнительное</option>
+                    <option value="angry">Злое</option>
+                    <option value="shy">Застенчивое</option>
+                </select>
+            </div>
+            <div class="card">
+                <h3>✨ Результат</h3>
+                <div class="prompt-box" id="constructorPrompt">Выберите параметры...</div>
+                <button id="generateConstructorBtn">🔄 Сгенерировать</button>
+                <button id="copyConstructorBtn" class="secondary">📋 Копировать</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- МОИ МОДЫ -->
+    <div id="mymods" class="panel">
+        <div class="grid">
+            <div class="card">
+                <h3>📁 Мои моды</h3>
+                <p style="color:#aaa">Моды хранятся в памяти браузера</p>
+                <div id="myModsList">Нет созданных модов</div>
+                <button id="createModBtn" style="margin-top:20px">➕ Создать новый мод</button>
+            </div>
+            <div class="card">
+                <h3>📤 Поделиться</h3>
+                <p style="color:#aaa">Экспорт мода в файл или по ссылке</p>
+                <button id="exportModsBtn">📥 Скачать все мои моды</button>
+                <button id="importModsBtn" class="secondary">📤 Загрузить из файла</button>
+                <input type="file" id="importFileInput" accept=".json" style="display:none">
+            </div>
+        </div>
+    </div>
+    
+    <!-- НАСТРОЙКИ -->
+    <div id="settings" class="panel">
+        <div class="grid">
+            <div class="card">
+                <h3>🎨 Оформление</h3>
+                <label><input type="checkbox" id="darkTheme" checked> Тёмная тема</label>
+                <label><input type="checkbox" id="autoCopy"> Автокопирование промпта</label>
+            </div>
+            <div class="card">
+                <h3>💾 Данные</h3>
+                <button id="clearCacheBtn" class="secondary">🗑️ Очистить кэш</button>
+                <button id="installAppBtn">📱 Установить как приложение</button>
+                <p style="color:#aaa; font-size:12px; margin-top:10px">Версия 1.0 • Модов в облаке: <span id="cloudModsCount">0</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast">Готово</div>
+
+<script>
+// ========== ОБЛАЧНАЯ БИБЛИОТЕКА МОДОВ ==========
+const CLOUD_MODS_URL = 'https://gist.githubusercontent.com/anonymous/placeholder/raw/mods.json';
+
+// Локальный кэш
+let installedMods = JSON.parse(localStorage.getItem('gpc_installed_mods') || '{}');
+let myMods = JSON.parse(localStorage.getItem('gpc_my_mods') || '[]');
+let settings = JSON.parse(localStorage.getItem('gpc_settings') || '{"darkTheme":true,"autoCopy":false}');
+
+// Демо-моды (пока облако не настроено)
+const DEMO_MODS = [
+    { id: 'mlp_full', name: '🦄 MLP Полный набор', description: 'Все пони, анатомия, магия', category: 'mlp', rating: 4.9, downloads: 2300, author: 'PonyMaster', installed: false },
+    { id: 'lingerie_100', name: '👙 Бельё (100+)', description: 'Кружево, латекс, чулки', category: 'lingerie', rating: 4.8, downloads: 5100, author: 'LingerieGod', installed: false },
+    { id: 'anthro_animals', name: '🐾 Антропо животные', description: 'Коровы, лошади, кошки', category: 'anthro', rating: 4.7, downloads: 1800, author: 'FurryMaster', installed: false },
+    { id: 'faces_beauty', name: '🎨 Красивые лица', description: 'Европа, Азия, 50+ вариантов', category: 'faces', rating: 4.9, downloads: 3200, author: 'FaceArtist', installed: false },
+    { id: 'anime_style', name: '🌸 Аниме стиль', description: 'Ghibli, Shinkai, 90s', category: 'anime', rating: 4.8, downloads: 4500, author: 'AnimeLover', installed: false },
+    { id: 'alt_girl', name: '🖤 Альтушка', description: 'Гранж, готика, e-girl', category: 'alt', rating: 4.6, downloads: 2800, author: 'AltQueen', installed: false }
+];
+
+// ========== УВЕДОМЛЕНИЯ ==========
+function toast(text) {
+    let t = document.getElementById('toast');
+    t.textContent = text;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ========== ТАБЫ ==========
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+        if (btn.dataset.tab === 'library') renderModsList();
+        if (btn.dataset.tab === 'mymods') renderMyModsList();
+    });
+});
+
+// ========== КАТЕГОРИИ ==========
+document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderModsList(btn.dataset.cat);
+    });
+});
+
+// ========== РЕНДЕР БИБЛИОТЕКИ ==========
+function renderModsList(category = 'all') {
+    let mods = DEMO_MODS.filter(m => category === 'all' || m.category === category);
+    let html = '';
+    mods.forEach(mod => {
+        let isInstalled = installedMods[mod.id];
+        html += `<div class="mod-card ${isInstalled ? 'installed' : ''}">
+            <h4>${mod.name}</h4>
+            <p>${mod.description}</p>
+            <p>⭐ ${mod.rating} • 👤 ${mod.author} • ⬇️ ${mod.downloads}</p>
+            <button onclick="${isInstalled ? 'uninstallMod' : 'installMod'}('${mod.id}')">${isInstalled ? '✅ Установлено' : '➕ Установить'}</button>
+        </div>`;
+    });
+    document.getElementById('modsList').innerHTML = html || '<p>Нет модов в этой категории</p>';
+    document.getElementById('cloudModsCount').textContent = DEMO_MODS.length;
+}
+
+// ========== УСТАНОВКА МОДА ==========
+window.installMod = function(modId) {
+    let mod = DEMO_MODS.find(m => m.id === modId);
+    if (mod) {
+        installedMods[modId] = { name: mod.name, installedAt: Date.now() };
+        localStorage.setItem('gpc_installed_mods', JSON.stringify(installedMods));
+        toast(`✅ Мод "${mod.name}" установлен`);
+        renderModsList(document.querySelector('.cat-btn.active').dataset.cat);
+    }
+};
+
+window.uninstallMod = function(modId) {
+    delete installedMods[modId];
+    localStorage.setItem('gpc_installed_mods', JSON.stringify(installedMods));
+    toast(`🗑️ Мод удалён`);
+    renderModsList(document.querySelector('.cat-btn.active').dataset.cat);
+};
+
+// ========== МОИ МОДЫ ==========
+function renderMyModsList() {
+    if (myMods.length === 0) {
+        document.getElementById('myModsList').innerHTML = '<p style="color:#aaa">Нет созданных модов</p>';
+        return;
+    }
+    let html = myMods.map((mod, i) => `
+        <div class="mod-card">
+            <h4>📦 ${mod.name || 'Без названия'}</h4>
+            <p>${mod.description || ''}</p>
+            <button onclick="editMod(${i})">✏️ Редактировать</button>
+            <button onclick="deleteMod(${i})">🗑️ Удалить</button>
+        </div>
+    `).join('');
+    document.getElementById('myModsList').innerHTML = html;
+}
+
+window.createMod = function() {
+    let name = prompt('Название мода:');
+    if (name) {
+        myMods.push({ name, description: '', options: {}, createdAt: Date.now() });
+        localStorage.setItem('gpc_my_mods', JSON.stringify(myMods));
+        renderMyModsList();
+        toast(`📁 Мод "${name}" создан`);
+    }
+};
+
+window.editMod = function(index) {
+    toast('✏️ Редактор в разработке');
+};
+
+window.deleteMod = function(index) {
+    if (confirm('Удалить мод?')) {
+        myMods.splice(index, 1);
+        localStorage.setItem('gpc_my_mods', JSON.stringify(myMods));
+        renderMyModsList();
+        toast('🗑️ Мод удалён');
+    }
+};
+
+// ========== ГЕНЕРАЦИЯ ПРОМПТОВ ==========
+const quickPrompts = {
+    random: () => {
+        let races = ['human female', 'pony (MLP style)', 'elf', 'demon', 'cat girl'];
+        let styles = ['anime style', 'digital painting', 'dark fantasy', 'alt aesthetic'];
+        let moods = ['smiling', 'lustful gaze', 'shy', 'confident'];
+        let race = races[Math.floor(Math.random() * races.length)];
+        let style = styles[Math.floor(Math.random() * styles.length)];
+        let mood = moods[Math.floor(Math.random() * moods.length)];
+        return `${race}, ${style}, ${mood}, masterpiece, best quality`;
+    },
+    mlp: () => 'pony (MLP style), equine anatomy, cute, pastel colors, anime style, masterpiece',
+    sexy: () => 'human female, lingerie, seductive pose, bedroom, soft lighting, photorealistic, masterpiece',
+    alt: () => 'alt girl, gothic aesthetic, black lipstick, piercings, dark makeup, alternative fashion, masterpiece'
+};
+
+document.getElementById('randomBtn').addEventListener('click', () => {
+    let prompt = quickPrompts.random();
+    document.getElementById('quickPrompt').textContent = prompt;
+    if (settings.autoCopy) navigator.clipboard?.writeText(prompt);
+    toast('🎲 Случайный промпт');
+});
+
+document.getElementById('quickPreset1').addEventListener('click', () => {
+    document.getElementById('quickPrompt').textContent = quickPrompts.mlp();
+    toast('🦄 MLP');
+});
+
+document.getElementById('quickPreset2').addEventListener('click', () => {
+    document.getElementById('quickPrompt').textContent = quickPrompts.sexy();
+    toast('👙 Соблазнительная');
+});
+
+document.getElementById('quickPreset3').addEventListener('click', () => {
+    document.getElementById('quickPrompt').textContent = quickPrompts.alt();
+    toast('🖤 Альтушка');
+});
+
+document.getElementById('copyQuickBtn').addEventListener('click', () => {
+    navigator.clipboard?.writeText(document.getElementById('quickPrompt').textContent);
+    toast('📋 Скопировано');
+});
+
+// ========== КОНСТРУКТОР ==========
+document.getElementById('generateConstructorBtn').addEventListener('click', () => {
+    let type = document.getElementById('charType').value;
+    let style = document.getElementById('charStyle').value;
+    let outfit = document.getElementById('charOutfit').value;
+    let mood = document.getElementById('charMood').value;
+    
+    let prompt = `${type}, ${style} style, ${outfit}, ${mood} expression, masterpiece, best quality`;
+    document.getElementById('constructorPrompt').textContent = prompt;
+});
+
+document.getElementById('copyConstructorBtn').addEventListener('click', () => {
+    navigator.clipboard?.writeText(document.getElementById('constructorPrompt').textContent);
+    toast('📋 Скопировано');
+});
+
+// ========== НАСТРОЙКИ ==========
+document.getElementById('darkTheme').addEventListener('change', (e) => {
+    settings.darkTheme = e.target.checked;
+    localStorage.setItem('gpc_settings', JSON.stringify(settings));
+});
+
+document.getElementById('autoCopy').addEventListener('change', (e) => {
+    settings.autoCopy = e.target.checked;
+    localStorage.setItem('gpc_settings', JSON.stringify(settings));
+});
+
+document.getElementById('clearCacheBtn').addEventListener('click', () => {
+    if (confirm('Очистить весь кэш?')) {
+        localStorage.clear();
+        location.reload();
+    }
+});
+
+document.getElementById('installAppBtn').addEventListener('click', () => {
+    toast('📱 Нажмите ⋮ → "Установить приложение" в меню браузера');
+});
+
+document.getElementById('createModBtn').addEventListener('click', createMod);
+
+document.getElementById('exportModsBtn').addEventListener('click', () => {
+    let data = JSON.stringify({ installedMods, myMods, settings }, null, 2);
+    let blob = new Blob([data], {type: 'application/json'});
+    let a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'gpc_backup.json';
+    a.click();
+    toast('💾 Бэкап скачан');
+});
+
+document.getElementById('importModsBtn').addEventListener('click', () => {
+    document.getElementById('importFileInput').click();
+});
+
+document.getElementById('importFileInput').addEventListener('change', (e) => {
+    let file = e.target.files[0];
+    if (file) {
+        let reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                let data = JSON.parse(ev.target.result);
+                if (data.installedMods) installedMods = data.installedMods;
+                if (data.myMods) myMods = data.myMods;
+                if (data.settings) settings = data.settings;
+                localStorage.setItem('gpc_installed_mods', JSON.stringify(installedMods));
+                localStorage.setItem('gpc_my_mods', JSON.stringify(myMods));
+                localStorage.setItem('gpc_settings', JSON.stringify(settings));
+                toast('📤 Данные импортированы');
+                location.reload();
+            } catch(e) { alert('Ошибка файла'); }
+        };
+        reader.readAsText(file);
+    }
+});
+
+// ========== PWA РЕГИСТРАЦИЯ ==========
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(() => console.log('SW registered'));
+}
+
+// ========== ЗАГРУЗКА ==========
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('darkTheme').checked = settings.darkTheme;
+    document.getElementById('autoCopy').checked = settings.autoCopy;
+    renderModsList();
+    toast('☁️ GPC Generator загружен');
+});
+</script>
+</body>
+</html>
