@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>🧬 GPC Hardcore Fantasy v1.5 — MOD FIX</title>
+    <title>🧬 GPC Hardcore Fantasy v1.7 — FULL + MODS</title>
     <style>
         * { transition: background 0.2s, color 0.2s, opacity 0.2s; box-sizing: border-box; }
         body { font-family: system-ui, 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #0b0b0f; color: #e3e3e8; }
@@ -68,10 +68,10 @@
 <body>
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>🧬 GPC Hardcore Fantasy · v1.5 MOD FIX</h1>
+        <h1>🧬 GPC Hardcore Fantasy · v1.7 FULL + MODS</h1>
         <button id="themeToggle" class="theme-switch">🌙 Светлая тема</button>
     </div>
-    <div class="sub">✅ ИСПРАВЛЕНА ЗАГРУЗКА МОДОВ + PornWorks встроен + XSS защита</div>
+    <div class="sub">✅ ПОЛНЫЕ ОПЦИИ + PornWorks + МОДЫ (одежда через JSON)</div>
 
     <div class="tabs">
         <button class="tab-btn" data-tab="anthro">🐾 Антропо</button>
@@ -102,24 +102,22 @@
                 <label>Разделитель</label><input type="text" id="separator" value=", ">
                 <label><input type="checkbox" id="autoCopy"> Автокопирование</label>
                 <hr>
-                <label><input type="checkbox" id="pornworksMode"> 🔥 PornWorks Optimized (встроено)</label>
+                <label><input type="checkbox" id="pornworksMode"> 🔥 PornWorks Optimized</label>
             </div>
             <div class="setting-card">
-                <h3>📁 Расширения JSON (v1.5 FIX)</h3>
+                <h3>📁 Расширения JSON</h3>
                 <button id="loadExtBtn">➕ Загрузить мод</button>
                 <button id="resetExtBtn" class="secondary">🗑️ Сбросить моды</button>
                 <button id="saveModsBtn" class="secondary" style="margin-left:5px;">💾 Сохранить моды</button>
                 <input type="file" id="extFile" accept=".json" style="display:none;" multiple>
                 <div id="extStatus" class="status-msg">✓ Модов: 0</div>
                 <div id="modList" class="mod-list"></div>
-                <hr><pre style="font-size:0.6rem;">Пример: {"extraTraits":["horns","wings"]}</pre>
+                <hr><pre style="font-size:0.6rem;">Пример: {"tops":[{"v":"crop top","t":"Кроп-топ"}]}</pre>
             </div>
         </div>
     </div>
 
-    <div id="generatorPanels">
-        <!-- Содержимое панелей остаётся таким же, как в v1.4 -->
-    </div>
+    <div id="generatorPanels"></div>
 
     <div class="output-area">
         <h3>✨ Промпт</h3>
@@ -133,663 +131,265 @@
             <code id="negPromptText"></code>
             <button id="copyNegBtn" style="margin-top:6px; background:#555;">Скопировать</button>
         </div>
-        <div class="note">✅ v1.5 — ЗАГРУЗКА МОДОВ ИСПРАВЛЕНА + PornWorks Mode</div>
+        <div class="note">✅ v1.7 — ПОЛНЫЕ ОПЦИИ + МОДЫ ДЛЯ ОДЕЖДЫ</div>
     </div>
 </div>
 <div id="toast" class="toast-notification">Готово</div>
 
 <script>
-// ========== ИСПРАВЛЕННАЯ ВЕРСИЯ С РАБОЧИМИ МОДАМИ ==========
 (function() {
     "use strict";
     
-    const VERSION = "1.5";
-    const STORAGE_KEYS = {
-        SETTINGS: 'gpc_v15_settings',
-        MODS: 'gpc_v15_mods',
-        THEME: 'gpc_v15_theme'
-    };
+    const VERSION = "1.7";
+    const STORAGE_KEYS = { SETTINGS: 'gpc_v17_settings', MODS: 'gpc_v17_mods', THEME: 'gpc_v17_theme' };
     
-    const escapeHtml = (text) => {
-        if (text === undefined || text === null) return '';
-        const div = document.createElement('div');
-        div.textContent = String(text);
-        return div.innerHTML;
-    };
+    const escapeHtml = (text) => { if (text === undefined || text === null) return ''; const div = document.createElement('div'); div.textContent = String(text); return div.innerHTML; };
     
-    // ВСТРОЕННЫЕ PORNWORKS ОПЦИИ
+    // ПОЛНЫЕ БАЗОВЫЕ ОПЦИИ (ОДЕЖДА ПУСТАЯ - ДЛЯ МОДОВ)
     const baseOptions = {
-        race: [
-            {v:"", t:"— выберите —"},
-            {v:"human female", t:"Человек"},
-            {v:"female demon", t:"Демоница"},
-            {v:"succubus", t:"Суккуб"},
-            {v:"dark elf", t:"Тёмная эльфийка"},
-            {v:"vampire", t:"Вампирша"},
-            {v:"pony (MLP style)", t:"Пони (MLP)"},
-            {v:"anthro furry cow", t:"Антропо корова"},
-            {v:"anthro horse", t:"Антропо лошадь"},
-            {v:"cat girl", t:"Кошко-девушка"},
-            {v:"humanized pony girl", t:"🎠 Очеловеченная пони (PW)"},
-            {v:"humanized furry", t:"🐾 Очеловеченная фурри (PW)"}
-        ],
-        extraTraits: [
-            {v:"horns", t:"рога"},
-            {v:"wings", t:"крылья"},
-            {v:"tail", t:"хвост"},
-            {v:"fur", t:"мех"},
-            {v:"alicorn, wings, horn", t:"аликорн (MLP)"},
-            {v:"animal ears", t:"звериные уши (PW)"},
-            {v:"fluffy tail", t:"пушистый хвост (PW)"},
-            {v:"elf ears", t:"эльфийские уши (PW)"},
-            {v:"succubus wings", t:"крылья суккуба (PW)"}
-        ],
-        pose: [
-            {v:"", t:"— стандартная —"},
-            {v:"standing", t:"стоя"},
-            {v:"sitting", t:"сидя"},
-            {v:"lying", t:"лёжа"},
-            {v:"looking at viewer", t:"👀 Смотрит на зрителя (PW)"},
-            {v:"seductive pose", t:"💋 Соблазнительная поза (PW)"}
-        ],
-        bodyType: [
-            {v:"", t:"— по умолчанию —"},
-            {v:"athletic", t:"атлетичное"},
-            {v:"curvy", t:"пышное"},
-            {v:"slender", t:"стройное"},
-            {v:"muscular", t:"мускулистое"}
-        ],
-        muscles: [
-            {v:"", t:"— нет —"},
-            {v:"six pack abs", t:"пресс кубиками"},
-            {v:"toned thighs", t:"подтянутые бёдра"}
-        ],
-        top: [
-            {v:"", t:"— без верха —"},
-            {v:"torn robe", t:"порванная роба"},
-            {v:"leather harness", t:"кожаная сбруя"},
-            {v:"nothing", t:"ничего"}
-        ],
-        bottom: [
-            {v:"", t:"— без низа —"},
-            {v:"torn leather pants", t:"рваные штаны"},
-            {v:"short skirt", t:"короткая юбка"},
-            {v:"no bottom", t:"без низа"}
-        ],
-        footwear: [
-            {v:"", t:"— без обуви —"},
-            {v:"high heels", t:"шпильки"},
-            {v:"barefoot", t:"босиком"}
-        ],
-        accessories: [
-            {v:"choker", t:"чокер"},
-            {v:"collar", t:"ошейник"},
-            {v:"crown", t:"корона"}
-        ],
-        hair: [
-            {v:"long black hair", t:"длинные чёрные"},
-            {v:"short white hair", t:"короткие белые"},
-            {v:"long purple mane", t:"фиолетовая грива"},
-            {v:"rainbow mane", t:"радужная грива"}
-        ],
-        eyes: [
-            {v:"red eyes", t:"красные"},
-            {v:"golden eyes", t:"золотые"},
-            {v:"purple eyes", t:"фиолетовые"},
-            {v:"bedroom eyes", t:"🫦 Томный взгляд (PW)"}
-        ],
-        skin: [
-            {v:"pale skin", t:"бледная"},
-            {v:"dark skin", t:"тёмная"},
-            {v:"purple coat", t:"фиолетовая шерсть"},
-            {v:"detailed skin texture", t:"✨ Детальная кожа (PW)"}
-        ],
-        tattoos: [
-            {v:"demonic runes", t:"демонические руны"},
-            {v:"battle scars", t:"шрамы"},
-            {v:"cutie mark", t:"кьютимарка"}
-        ],
-        action: [
-            {v:"masturbating", t:"мастурбирует"},
-            {v:"using dildo", t:"использует дилдо"},
-            {v:"spreading legs", t:"раздвигает ноги"},
-            {v:"doggy style", t:"раком"}
-        ],
-        expression: [
-            {v:"lustful gaze", t:"похотливый взгляд"},
-            {v:"smiling", t:"улыбается"},
-            {v:"pleasure face", t:"лицо удовольствия"},
-            {v:"seductive smile", t:"😏 Соблазнительная улыбка (PW)"},
-            {v:"blushing", t:"😊 Румянец (PW)"}
-        ],
-        angle: [
-            {v:"from below", t:"снизу вверх"},
-            {v:"from above", t:"сверху вниз"},
-            {v:"rear view", t:"вид сзади"},
-            {v:"close-up", t:"крупный план"}
-        ],
-        effects: [
-            {v:"fog", t:"туман"},
-            {v:"glowing magic", t:"светящаяся магия"},
-            {v:"sweat on skin", t:"💧 Капли пота (PW)"},
-            {v:"depth of field", t:"📷 Глубина резкости (PW)"}
-        ],
-        style: [
-            {v:"", t:"— по умолчанию —"},
-            {v:"anime style", t:"Аниме"},
-            {v:"digital painting", t:"Цифровая живопись"},
-            {v:"photorealistic", t:"📸 Фотореализм (PW)"},
-            {v:"hentai style", t:"💕 Хентай-стиль (PW)"}
-        ],
-        clarity: [
-            {v:"", t:"— по умолчанию —"},
-            {v:"sharp focus", t:"чётко"},
-            {v:"8K", t:"8K"},
-            {v:"masterpiece, best quality", t:"⭐ PW Quality"}
-        ],
-        framing: [
-            {v:"", t:"— по умолчанию —"},
-            {v:"medium shot", t:"по пояс"},
-            {v:"close-up", t:"крупный план"}
-        ],
-        lighting: [
-            {v:"", t:"— по умолчанию —"},
-            {v:"rim lighting", t:"контровой свет"},
-            {v:"soft studio lighting", t:"💡 Студийный свет (PW)"},
-            {v:"volumetric lighting", t:"✨ Объёмный свет (PW)"}
-        ],
-        background: [
-            {v:"", t:"— по умолчанию —"},
-            {v:"simple background", t:"простой фон"},
-            {v:"dark dungeon", t:"тёмное подземелье"},
-            {v:"simple white background", t:"⬜ Белый фон (PW)"},
-            {v:"blurred bedroom", t:"🛏️ Размытая спальня (PW)"}
-        ]
+        race: [{v:"", t:"— выберите —"},{v:"human female", t:"Человек"},{v:"female demon", t:"Демоница"},{v:"harpy", t:"Гарпия"},{v:"werewolf", t:"Вервольф"},{v:"succubus", t:"Суккуб"},{v:"dark elf", t:"Тёмная эльфийка"},{v:"vampire", t:"Вампирша"},{v:"pony (MLP style)", t:"Пони (MLP)"},{v:"anthro furry cow", t:"Антропо корова"},{v:"anthro horse", t:"Антропо лошадь"},{v:"cat girl", t:"Кошко-девушка"},{v:"tiger beastfolk", t:"Тигр-ферал"},{v:"lion beastfolk", t:"Лев-ферал"}],
+        extraTraits: [{v:"horns", t:"рога"},{v:"wings", t:"крылья"},{v:"tail", t:"хвост"},{v:"fur", t:"мех"},{v:"alicorn, wings, horn", t:"аликорн (MLP)"},{v:"pegasus, wings", t:"пегас (MLP)"},{v:"unicorn, horn", t:"единорог (MLP)"},{v:"earth pony", t:"земная пони (MLP)"},{v:"horse ears, tail", t:"уши и хвост лошади"},{v:"cat ears, tail", t:"кошачьи уши и хвост"},{v:"claws", t:"когти"},{v:"pointed ears", t:"заострённые уши"},{v:"fangs", t:"клыки"},{v:"magic aura", t:"магическая аура"},{v:"wolf head", t:"волчья голова"},{v:"stripes", t:"полосы"},{v:"feline face", t:"кошачье лицо"},{v:"mane", t:"грива"}],
+        pose: [{v:"", t:"— стандартная —"},{v:"standing", t:"стоя"},{v:"sitting", t:"сидя"},{v:"lying", t:"лёжа"},{v:"flying", t:"в полёте"},{v:"on all fours", t:"на четвереньках"}],
+        bodyType: [{v:"", t:"— по умолчанию —"},{v:"athletic", t:"атлетичное"},{v:"curvy", t:"пышное"},{v:"slender", t:"стройное"},{v:"muscular", t:"мускулистое"}],
+        muscles: [{v:"", t:"— нет —"},{v:"six pack abs", t:"пресс кубиками"},{v:"toned thighs", t:"подтянутые бёдра"}],
+        top: [{v:"", t:"— загрузите мод —"}],
+        bottom: [{v:"", t:"— загрузите мод —"}],
+        footwear: [{v:"", t:"— загрузите мод —"}],
+        accessories: [{v:"", t:"— загрузите мод —"}],
+        hair: [{v:"long black hair", t:"длинные чёрные"},{v:"short white hair", t:"короткие белые"},{v:"long purple mane", t:"фиолетовая грива"},{v:"rainbow mane", t:"радужная грива"},{v:"pink mane", t:"розовая грива"},{v:"long blonde ponytail", t:"длинный светлый хвост"},{v:"purple curled mane", t:"фиолетовая кудрявая грива"}],
+        eyes: [{v:"red eyes", t:"красные"},{v:"golden eyes", t:"золотые"},{v:"purple eyes", t:"фиолетовые"},{v:"magenta eyes", t:"пурпурные"},{v:"green eyes", t:"зелёные"},{v:"blue eyes", t:"синие"},{v:"teal eyes", t:"бирюзовые"}],
+        skin: [{v:"pale skin", t:"бледная"},{v:"dark skin", t:"тёмная"},{v:"purple coat", t:"фиолетовая шерсть"},{v:"cyan coat", t:"голубая шерсть"},{v:"orange coat", t:"оранжевая шерсть"},{v:"white coat", t:"белая шерсть"},{v:"yellow coat", t:"жёлтая шерсть"},{v:"grey fur", t:"серый мех"},{v:"black skin", t:"чёрная кожа"},{v:"orange with black stripes", t:"оранжевый с чёрными полосами"},{v:"golden fur", t:"золотой мех"}],
+        tattoos: [{v:"demonic runes", t:"демонические руны"},{v:"battle scars", t:"шрамы"},{v:"cutie mark", t:"кьютимарка"}],
+        action: [{v:"masturbating", t:"мастурбирует"},{v:"using dildo", t:"использует дилдо"},{v:"spreading legs", t:"раздвигает ноги"},{v:"squeezing breasts", t:"сжимает грудь"},{v:"doggy style", t:"раком"},{v:"giving blowjob", t:"делает минет"}],
+        expression: [{v:"lustful gaze", t:"похотливый взгляд"},{v:"smiling", t:"улыбается"},{v:"pleasure face", t:"лицо удовольствия"},{v:"surprised", t:"удивлена"},{v:"in pain", t:"боль"},{v:"ahegao", t:"ахэгао"}],
+        angle: [{v:"from below", t:"снизу вверх"},{v:"from above", t:"сверху вниз"},{v:"rear view", t:"вид сзади"},{v:"over the shoulder", t:"через плечо"},{v:"close-up", t:"крупный план"},{v:"dutch angle", t:"голландский угол"}],
+        effects: [{v:"fog", t:"туман"},{v:"glowing magic", t:"светящаяся магия"},{v:"sweat drops", t:"капли пота"},{v:"sparkles", t:"сверкание"},{v:"smoke", t:"дым"},{v:"rainbow streaks", t:"радужные полосы"}],
+        style: [{v:"", t:"— по умолчанию —"},{v:"anime style", t:"Аниме"},{v:"comic style", t:"Комикс"},{v:"3D render", t:"3D-рендер"},{v:"digital painting", t:"Цифровая живопись"},{v:"dark fantasy art", t:"Dark fantasy"}],
+        clarity: [{v:"", t:"— по умолчанию —"},{v:"sharp focus", t:"чётко"},{v:"8K", t:"8K"},{v:"micro-details", t:"микродетали"}],
+        framing: [{v:"", t:"— по умолчанию —"},{v:"medium shot", t:"по пояс"},{v:"close-up", t:"крупный план"},{v:"cowboy shot", t:"кавалерийский план"}],
+        lighting: [{v:"", t:"— по умолчанию —"},{v:"rim lighting", t:"контровой свет"},{v:"dramatic shadows", t:"жёсткие тени"},{v:"red neon", t:"красный неон"}],
+        background: [{v:"", t:"— по умолчанию —"},{v:"simple background", t:"простой фон"},{v:"dark dungeon", t:"тёмное подземелье"},{v:"cloudsdale", t:"Клаудсдейл"},{v:"barn", t:"амбар"},{v:"cottage", t:"коттедж"},{v:"carousel boutique", t:"бутик Карусель"}]
     };
     
     const checkboxGroups = ['extraTraits', 'accessories', 'hair', 'eyes', 'skin', 'tattoos', 'action', 'expression', 'angle', 'effects'];
     
-    // Пресеты (сокращены для примера, полные как в v1.4)
     const presets = {
-        mlp_twilight: {race:"pony (MLP style)", extraTraits:["alicorn, wings, horn"], pose:"standing", bodyType:"slender", hair:["long purple mane"], eyes:["purple eyes"], skin:["purple coat"], breast:3, butt:3, mlpAnatomy:true},
+        mlp_twilight: {race:"pony (MLP style)", extraTraits:["alicorn, wings, horn"], pose:"standing", bodyType:"slender", hair:["long purple mane"], eyes:["purple eyes"], skin:["purple coat"], tattoos:["cutie mark"], style:"anime style", background:"cloudsdale", breast:3, butt:3, mlpAnatomy:true},
+        mlp_rainbow: {race:"pony (MLP style)", extraTraits:["pegasus, wings"], pose:"flying", bodyType:"athletic", hair:["rainbow mane"], eyes:["magenta eyes"], skin:["cyan coat"], tattoos:["cutie mark"], style:"comic style", background:"cloudsdale", breast:2, butt:2, mlpAnatomy:true},
+        mlp_applejack: {race:"pony (MLP style)", extraTraits:["earth pony"], pose:"standing", bodyType:"curvy", hair:["long blonde ponytail"], eyes:["green eyes"], skin:["orange coat"], tattoos:["cutie mark"], style:"3D render", background:"barn", breast:4, butt:4, mlpAnatomy:true},
+        mlp_rarity: {race:"pony (MLP style)", extraTraits:["unicorn, horn"], pose:"sitting", bodyType:"curvy", hair:["purple curled mane"], eyes:["blue eyes"], skin:["white coat"], tattoos:["cutie mark"], style:"digital painting", background:"carousel boutique", breast:4, butt:3, mlpAnatomy:true},
+        mlp_fluttershy: {race:"pony (MLP style)", extraTraits:["pegasus, wings"], pose:"lying", bodyType:"slender", hair:["pink mane"], eyes:["teal eyes"], skin:["yellow coat"], tattoos:["cutie mark"], style:"anime style", background:"cottage", breast:3, butt:1, mlpAnatomy:true},
+        anthro_cow: {race:"anthro furry cow", extraTraits:["horns", "tail"], bodyType:"muscular", skin:["black skin"], breast:4, butt:4},
+        anthro_horse: {race:"anthro horse", extraTraits:["horse ears, tail"], bodyType:"athletic", breast:3, butt:4},
+        anthro_wolf: {race:"werewolf", extraTraits:["fur", "tail", "claws"], bodyType:"muscular", breast:3, butt:3},
+        anthro_cat: {race:"cat girl", extraTraits:["cat ears, tail"], bodyType:"slender", breast:3, butt:3},
         fantasy_demoness: {race:"female demon", extraTraits:["horns", "wings"], bodyType:"curvy", skin:["dark skin"], breast:4, butt:4},
-        human_warrior: {race:"human female", bodyType:"muscular", top:"torn robe", bottom:"torn leather pants", breast:3, butt:3}
+        fantasy_succubus: {race:"succubus", extraTraits:["wings", "tail"], bodyType:"curvy", skin:["pale skin"], action:["masturbating"], breast:4, butt:4},
+        fantasy_elf: {race:"dark elf", extraTraits:["pointed ears"], bodyType:"athletic", skin:["dark skin"], breast:3, butt:3},
+        fantasy_vampire: {race:"vampire", extraTraits:["fangs"], bodyType:"slender", skin:["pale skin"], breast:3, butt:3},
+        human_warrior: {race:"human female", bodyType:"muscular", breast:3, butt:3},
+        human_mage: {race:"human female", extraTraits:["magic aura"], bodyType:"slender", breast:3, butt:3},
+        human_rogue: {race:"human female", bodyType:"athletic", breast:3, butt:3},
+        feral_wolf: {race:"werewolf", extraTraits:["fur", "tail", "claws", "wolf head"], pose:"on all fours", bodyType:"muscular", skin:["grey fur"], breast:3, butt:3, feralAnatomy:true},
+        feral_tiger: {race:"tiger beastfolk", extraTraits:["stripes", "claws", "feline face"], pose:"lying", bodyType:"athletic", skin:["orange with black stripes"], breast:3, butt:3, feralAnatomy:true},
+        feral_lion: {race:"lion beastfolk", extraTraits:["mane", "tail", "claws"], pose:"sitting", bodyType:"muscular", skin:["golden fur"], breast:3, butt:3, feralAnatomy:true}
     };
     
     const tabCategories = {
-        anthro: { cow: { label: '🐄 Корова', preset: 'anthro_cow' }, horse: { label: '🐎 Лошадь', preset: 'anthro_horse' } },
-        fantasy: { demoness: { label: '🔥 Демонесса', preset: 'fantasy_demoness' }, succubus: { label: '💋 Суккуб', preset: 'fantasy_succubus' } },
-        mlp: { twilight: { label: '🦄 Сумерк', preset: 'mlp_twilight' } },
-        human: { warrior: { label: '⚔️ Воин', preset: 'human_warrior' } },
-        feral: {}
+        anthro: { cow: { label: '🐄 Корова', preset: 'anthro_cow' }, horse: { label: '🐎 Лошадь', preset: 'anthro_horse' }, wolf: { label: '🐺 Волчица', preset: 'anthro_wolf' }, cat: { label: '🐱 Кошка', preset: 'anthro_cat' } },
+        fantasy: { demoness: { label: '🔥 Демонесса', preset: 'fantasy_demoness' }, succubus: { label: '💋 Суккуб', preset: 'fantasy_succubus' }, elf: { label: '🧝 Эльфийка', preset: 'fantasy_elf' }, vampire: { label: '🦇 Вампирша', preset: 'fantasy_vampire' } },
+        mlp: { twilight: { label: '🦄 Сумерк', preset: 'mlp_twilight' }, rainbow: { label: '🌈 Радуга', preset: 'mlp_rainbow' }, applejack: { label: '🍎 Эпплджек', preset: 'mlp_applejack' }, rarity: { label: '💎 Рэрити', preset: 'mlp_rarity' }, fluttershy: { label: '🦋 Флаттершай', preset: 'mlp_fluttershy' } },
+        human: { warrior: { label: '⚔️ Воин', preset: 'human_warrior' }, mage: { label: '🧙 Маг', preset: 'human_mage' }, rogue: { label: '🗡️ Разбойник', preset: 'human_rogue' } },
+        feral: { wolf: { label: '🐺 Волк', preset: 'feral_wolf' }, tiger: { label: '🐯 Тигр', preset: 'feral_tiger' }, lion: { label: '🦁 Лев', preset: 'feral_lion' } }
     };
     
-    let loadedMods = [], modCounter = 0, currentTab = 'anthro', updateTimer = null;
+    let loadedMods = [], modCounter = 0, updateTimer = null;
     
-    function showToast(text, d=2000) { 
-        let t=document.getElementById('toast'); 
-        t.textContent=text; 
-        t.classList.add('show'); 
-        setTimeout(()=>t.classList.remove('show'), d); 
-    }
+    function showToast(text, d=2000) { let t=document.getElementById('toast'); t.textContent=text; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), d); }
     
-    function populateSelect(id, opts) {
-        let s=document.getElementById(id); 
-        if(!s) return;
-        s.innerHTML='';
-        opts.forEach(o=>{ 
-            let opt=document.createElement('option'); 
-            opt.value=o.v; 
-            opt.textContent=o.t; 
-            s.appendChild(opt); 
-        });
-    }
+    function populateSelect(id, opts) { let s=document.getElementById(id); if(!s) return; s.innerHTML=''; opts.forEach(o=>{ let opt=document.createElement('option'); opt.value=o.v; opt.textContent=o.t; s.appendChild(opt); }); }
     
     function populateCheckboxGroup(groupId, opts, selectedValues = []) {
-        let container = document.getElementById(groupId + 'Group');
-        if (!container) return;
-        let html = '';
-        opts.forEach(opt => {
-            let checked = selectedValues.includes(opt.v) ? 'checked' : '';
-            html += `<label><input type="checkbox" value="${escapeHtml(opt.v)}" ${checked}> ${escapeHtml(opt.t)}</label>`;
-        });
+        let container = document.getElementById(groupId + 'Group'); if (!container) return;
+        let html = ''; opts.forEach(opt => { let checked = selectedValues.includes(opt.v) ? 'checked' : ''; html += `<label><input type="checkbox" value="${escapeHtml(opt.v)}" ${checked}> ${escapeHtml(opt.t)}</label>`; });
         container.innerHTML = html;
     }
     
-    function getSelectedCheckboxValues(groupId) {
-        let container = document.getElementById(groupId + 'Group');
-        if (!container) return [];
-        return Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+    function getSelectedCheckboxValues(groupId) { let container = document.getElementById(groupId + 'Group'); if (!container) return []; return Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value); }
+    
+    function setSelectedCheckboxValues(groupId, values) { let container = document.getElementById(groupId + 'Group'); if (!container) return; container.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = values.includes(cb.value); }); }
+    
+    function clearAllCheckboxes() { checkboxGroups.forEach(group => setSelectedCheckboxValues(group, [])); }
+    
+    function populateAll() { for(let k in baseOptions) { if (checkboxGroups.includes(k)) { populateCheckboxGroup(k, baseOptions[k]); } else { populateSelect(k, baseOptions[k]); } } }
+    
+    function initSelectAllButtons() {
+        document.querySelectorAll('.select-all-btn').forEach(btn => { btn.addEventListener('click', (e) => { e.preventDefault(); let group = btn.dataset.group; let action = btn.dataset.action || 'all'; let container = document.getElementById(group + 'Group'); if (!container) return; if (action === 'invert') { container.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = !cb.checked); } else { container.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = action === 'all'); } debouncedUpdateUI(); }); });
     }
     
-    function setSelectedCheckboxValues(groupId, values) {
-        let container = document.getElementById(groupId + 'Group');
-        if (!container) return;
-        container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            cb.checked = values.includes(cb.value);
-        });
-    }
-    
-    function clearAllCheckboxes() {
-        checkboxGroups.forEach(group => setSelectedCheckboxValues(group, []));
-    }
-    
-    function populateAll() {
-        for(let k in baseOptions) {
-            if (checkboxGroups.includes(k)) {
-                populateCheckboxGroup(k, baseOptions[k]);
-            } else {
-                populateSelect(k, baseOptions[k]);
-            }
-        }
-    }
-    
-    // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ ДОБАВЛЕНИЯ ОПЦИЙ ==========
     function addOptionToGroup(groupId, val, txt) {
-        let container = document.getElementById(groupId + 'Group');
-        if (!container) return false;
-        
-        // Нормализуем значение: если это объект — берём v, иначе строку
+        let container = document.getElementById(groupId + 'Group'); if (!container) return false;
         let valueStr = (typeof val === 'object' && val !== null) ? String(val.v || val.value || '') : String(val);
         let textStr = (typeof val === 'object' && val !== null) ? String(val.t || val.text || val.v || '') : String(txt || val);
-        
         if (!valueStr) return false;
-        
-        // Проверяем, существует ли уже такая опция
-        let existing = container.querySelector(`input[value="${valueStr.replace(/"/g, '&quot;')}"]`);
-        if (existing) return false;
-        
-        let label = document.createElement('label');
-        label.innerHTML = `<input type="checkbox" value="${escapeHtml(valueStr)}"> ${escapeHtml(textStr)}`;
-        container.appendChild(label);
-        return true;
+        if (container.querySelector(`input[value="${valueStr.replace(/"/g, '&quot;')}"]`)) return false;
+        let label = document.createElement('label'); label.innerHTML = `<input type="checkbox" value="${escapeHtml(valueStr)}"> ${escapeHtml(textStr)}`; container.appendChild(label); return true;
     }
     
-    // ========== ИСПРАВЛЕННАЯ ЗАГРУЗКА МОДОВ ==========
     function loadMod(json, fname='mod') {
-        try{
-            let cfg = JSON.parse(json), added = 0;
-            
-            for (let groupId of checkboxGroups) {
-                if (cfg[groupId] && Array.isArray(cfg[groupId])) {
-                    for (let it of cfg[groupId]) {
-                        if (addOptionToGroup(groupId, it)) added++;
-                    }
-                }
-            }
-            
-            const selectMap = {
-                races:'race', poses:'pose', tops:'top', bottoms:'bottom', 
-                footwear:'footwear', bodyTypes:'bodyType', muscles:'muscles', 
-                styles:'style', clarity:'clarity', framing:'framing', 
-                lighting:'lighting', backgrounds:'background'
-            };
-            
-            for (let jk in selectMap) {
-                if (cfg[jk] && Array.isArray(cfg[jk])) {
-                    let select = document.getElementById(selectMap[jk]);
-                    if (!select) continue;
-                    for (let it of cfg[jk]) {
-                        let v = (typeof it === 'object' && it !== null) ? String(it.v || it.value || '') : String(it);
-                        let t = (typeof it === 'object' && it !== null) ? String(it.t || it.text || it.v || '') : String(it);
-                        if (v && !Array.from(select.options).some(o => o.value === v)) {
-                            select.appendChild(new Option(t, v));
-                            added++;
-                        }
-                    }
-                }
-            }
-            
-            if(added) {
-                modCounter++; 
-                loadedMods.push({name:fname, added}); 
-                updateModList(); 
-                document.getElementById('extStatus').innerText = `✓ Модов: ${modCounter} (+${added})`; 
-                showToast(`📁 ${fname} +${added}`);
-                saveAllSettings();
-            } else {
-                showToast(`⚠️ ${fname} без новых опций`);
-            }
-        } catch(e) { 
-            alert('JSON ошибка: ' + e.message); 
-        }
+        try{ let cfg = JSON.parse(json), added = 0;
+            for (let groupId of checkboxGroups) { if (cfg[groupId] && Array.isArray(cfg[groupId])) { for (let it of cfg[groupId]) { if (addOptionToGroup(groupId, it)) added++; } } }
+            const selectMap = {races:'race', poses:'pose', tops:'top', bottoms:'bottom', footwear:'footwear', bodyTypes:'bodyType', muscles:'muscles', styles:'style', clarity:'clarity', framing:'framing', lighting:'lighting', backgrounds:'background'};
+            for (let jk in selectMap) { if (cfg[jk] && Array.isArray(cfg[jk])) { let select = document.getElementById(selectMap[jk]); if (!select) continue; for (let it of cfg[jk]) { let v = (typeof it === 'object' && it !== null) ? String(it.v || it.value || '') : String(it); let t = (typeof it === 'object' && it !== null) ? String(it.t || it.text || it.v || '') : String(it); if (v && !Array.from(select.options).some(o => o.value === v)) { select.appendChild(new Option(t, v)); added++; } } } }
+            if(added) { modCounter++; loadedMods.push({name:fname, added}); updateModList(); document.getElementById('extStatus').innerText = `✓ Модов: ${modCounter} (+${added})`; showToast(`📁 ${fname} +${added}`); saveAllSettings(); } else { showToast(`⚠️ ${fname} без новых опций`); }
+        } catch(e) { alert('JSON ошибка: ' + e.message); }
     }
     
-    function updateModList() {
-        let l = document.getElementById('modList'); 
-        if(!l) return;
-        if(!loadedMods.length) { l.innerHTML = '<div style="color:#aaa;">Нет модов</div>'; return; }
-        l.innerHTML = loadedMods.map((m,i) => `<div class="mod-item"><span>📦 ${escapeHtml(m.name)} (+${m.added})</span><button data-index="${i}" class="remove-mod-btn">✖</button></div>`).join('');
-        l.querySelectorAll('.remove-mod-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                let idx = parseInt(btn.dataset.index);
-                if(idx >= 0 && idx < loadedMods.length) {
-                    loadedMods.splice(idx, 1);
-                    modCounter = loadedMods.length;
-                    document.getElementById('extStatus').innerText = `✓ Модов: ${modCounter}`;
-                    updateModList();
-                    saveAllSettings();
-                    showToast('Мод удалён');
-                }
-            });
-        });
-    }
+    function updateModList() { let l = document.getElementById('modList'); if(!l) return; if(!loadedMods.length) { l.innerHTML = '<div style="color:#aaa;">Нет модов</div>'; return; } l.innerHTML = loadedMods.map((m,i) => `<div class="mod-item"><span>📦 ${escapeHtml(m.name)} (+${m.added})</span><button data-index="${i}" class="remove-mod-btn">✖</button></div>`).join(''); l.querySelectorAll('.remove-mod-btn').forEach(btn => { btn.addEventListener('click', () => { let idx = parseInt(btn.dataset.index); if(idx >= 0 && idx < loadedMods.length) { loadedMods.splice(idx, 1); modCounter = loadedMods.length; document.getElementById('extStatus').innerText = `✓ Модов: ${modCounter}`; updateModList(); saveAllSettings(); showToast('Мод удалён'); } }); }); }
     
-    function resetMods() { 
-        if (!confirm('Сбросить все загруженные моды?')) return;
-        loadedMods = []; modCounter = 0; 
-        document.getElementById('extStatus').innerText = '✓ Модов: 0'; 
-        updateModList(); populateAll(); saveAllSettings();
-        showToast('Моды сброшены'); 
-    }
+    function resetMods() { if (!confirm('Сбросить все моды?')) return; loadedMods = []; modCounter = 0; document.getElementById('extStatus').innerText = '✓ Модов: 0'; updateModList(); populateAll(); saveAllSettings(); showToast('Моды сброшены'); }
     
-    function saveModsToStorage() {
-        localStorage.setItem(STORAGE_KEYS.MODS, JSON.stringify(loadedMods));
-        showToast('💾 Моды сохранены');
-    }
+    function saveModsToStorage() { localStorage.setItem(STORAGE_KEYS.MODS, JSON.stringify(loadedMods)); showToast('💾 Моды сохранены'); }
     
-    function loadModsFromStorage() {
-        let saved = localStorage.getItem(STORAGE_KEYS.MODS);
-        if (saved) {
-            try {
-                loadedMods = JSON.parse(saved);
-                modCounter = loadedMods.length;
-                updateModList();
-                document.getElementById('extStatus').innerText = `✓ Модов: ${modCounter}`;
-            } catch(e) {}
-        }
-    }
+    function loadModsFromStorage() { let saved = localStorage.getItem(STORAGE_KEYS.MODS); if (saved) { try { loadedMods = JSON.parse(saved); modCounter = loadedMods.length; updateModList(); document.getElementById('extStatus').innerText = `✓ Модов: ${modCounter}`; } catch(e) {} } }
     
     function getBreastTag(v) { return ["flat chest","very small breasts","small breasts","medium breasts","large breasts","huge breasts"][v] || "medium breasts"; }
     function getButtTag(v) { return ["flat butt","very small butt","small butt","medium butt","large butt","huge butt"][v] || "medium butt"; }
     
+    function fixAnatomyConflict() { const mlp = document.getElementById('mlpAnatomy'); const feral = document.getElementById('feralAnatomy'); if (mlp && feral && mlp.checked && feral.checked) { feral.checked = false; showToast('⚠️ MLP и Ферал анатомии несовместимы', 1500); } }
+    
     function buildPrompt() {
-        let parts = [], sep = document.getElementById('separator').value || ', ';
-        let race = document.getElementById('race').value;
-        if (race) parts.push(race);
-        
-        let extra = getSelectedCheckboxValues('extraTraits');
-        if (extra.length) parts.push(extra.join(', '));
-        
-        if (document.getElementById('mlpAnatomy')?.checked) parts.push('equine anatomy');
-        if (document.getElementById('feralAnatomy')?.checked) parts.push('feral anatomy');
-        
-        let top = document.getElementById('top').value;
-        let bottom = document.getElementById('bottom').value;
-        if (top) parts.push(top);
-        if (bottom) parts.push(bottom);
-        
-        parts.push(getBreastTag(parseInt(document.getElementById('breast').value)));
-        parts.push(getButtTag(parseInt(document.getElementById('butt').value)));
-        
-        let body = document.getElementById('bodyType').value;
-        if (body) parts.push(body);
-        
-        ['hair', 'eyes', 'skin', 'tattoos'].forEach(g => {
-            let vals = getSelectedCheckboxValues(g);
-            if (vals.length) parts.push(vals.join(', '));
-        });
-        
-        let action = getSelectedCheckboxValues('action');
-        let pose = document.getElementById('pose').value;
-        if (action.length) parts.push(action.join(', '));
-        else if (pose) parts.push(pose);
-        
-        let expr = getSelectedCheckboxValues('expression');
-        if (expr.length) parts.push(expr.join(', '));
-        
-        let style = document.getElementById('style').value;
-        let clarity = document.getElementById('clarity').value;
-        let light = document.getElementById('lighting').value;
-        let bg = document.getElementById('background').value;
-        
-        if (style) parts.push(style);
-        if (clarity) parts.push(clarity);
-        if (light) parts.push(light);
-        if (bg) parts.push(bg);
-        
-        let filtered = parts.filter(p => p && p.trim() !== '');
-        let prompt = filtered.join(sep);
-        
-        // PornWorks Mode
-        if (document.getElementById('pornworksMode')?.checked) {
-            prompt = 'masterpiece, best quality, ultra high res, ' + prompt;
-        } else {
-            let prefix = document.getElementById('fixedPrefixTags').value.trim();
-            let suffix = document.getElementById('fixedSuffixTags').value.trim();
-            if (prefix) prompt = prefix + sep + prompt;
-            if (suffix) prompt = prompt + sep + suffix;
-        }
-        
+        fixAnatomyConflict();
+        let parts = [], sep = document.getElementById('separator')?.value || ', ';
+        let race = document.getElementById('race')?.value; if (race) parts.push(race);
+        let extra = getSelectedCheckboxValues('extraTraits'); if (extra.length) parts.push(extra.join(', '));
+        if (document.getElementById('mlpAnatomy')?.checked) parts.push('equine anatomy', 'horse pussy', 'pony body');
+        if (document.getElementById('feralAnatomy')?.checked) parts.push('animal genitalia', 'feral anatomy');
+        let top = document.getElementById('top')?.value; if (top && top !== '— загрузите мод —') parts.push(top);
+        let bottom = document.getElementById('bottom')?.value; if (bottom && bottom !== '— загрузите мод —') parts.push(bottom);
+        let foot = document.getElementById('footwear')?.value; if (foot && foot !== '— загрузите мод —') parts.push(foot);
+        let acc = getSelectedCheckboxValues('accessories'); if (acc.length) parts.push(acc.join(', '));
+        parts.push(getBreastTag(parseInt(document.getElementById('breast')?.value || 3)));
+        parts.push(getButtTag(parseInt(document.getElementById('butt')?.value || 3)));
+        let body = document.getElementById('bodyType')?.value; if (body) parts.push(body);
+        let musc = document.getElementById('muscles')?.value; if (musc) parts.push(musc);
+        ['hair', 'eyes', 'skin', 'tattoos'].forEach(g => { let vals = getSelectedCheckboxValues(g); if (vals.length) parts.push(vals.join(', ')); });
+        let action = getSelectedCheckboxValues('action'); let pose = document.getElementById('pose')?.value; if (action.length) parts.push(action.join(', ')); else if (pose) parts.push(pose);
+        let expr = getSelectedCheckboxValues('expression'); if (expr.length) parts.push(expr.join(', '));
+        let angle = getSelectedCheckboxValues('angle'); if (angle.length) parts.push(angle.join(', '));
+        let eff = getSelectedCheckboxValues('effects'); if (eff.length) parts.push(eff.join(', '));
+        let style = document.getElementById('style')?.value; if (style) parts.push(style);
+        let clarity = document.getElementById('clarity')?.value; if (clarity) parts.push(clarity);
+        let framing = document.getElementById('framing')?.value; if (framing) parts.push(framing);
+        let light = document.getElementById('lighting')?.value; if (light) parts.push(light);
+        let bg = document.getElementById('background')?.value; if (bg) parts.push(bg);
+        if (document.getElementById('strictSharpMode')?.checked) { style = 'sharp lines, clean lineart'; clarity = '8K, ultra HD'; }
+        let filtered = parts.filter(p => p && p.trim() !== ''); let prompt = filtered.join(sep);
+        if (document.getElementById('pornworksMode')?.checked) { prompt = 'masterpiece, best quality, ultra high res, ' + prompt; } else { let prefix = document.getElementById('fixedPrefixTags')?.value.trim(); let suffix = document.getElementById('fixedSuffixTags')?.value.trim(); if (prefix) prompt = prefix + sep + prompt; if (suffix) prompt = prompt + sep + suffix; }
         return prompt.replace(/, ,/g, ',').replace(/,\s*,/g, ',').trim() || '';
     }
     
-    function buildNegative() {
-        let neg = ["blur", "low resolution", "bad anatomy", "deformed", "ugly", "worst quality"];
-        if (document.getElementById('fixHands')?.checked) neg.push("bad hands", "extra fingers");
-        if (document.getElementById('fixFace')?.checked) neg.push("weird eyes", "asymmetrical face");
-        if (document.getElementById('noHumanParts')?.checked) neg.push("human hands", "human face");
-        return neg.join(', ');
-    }
+    function buildNegative() { let neg = ["blur", "soft focus", "low resolution", "bad anatomy", "deformed", "ugly", "worst quality"]; if (document.getElementById('fixHands')?.checked) neg.push("bad hands", "extra fingers"); if (document.getElementById('fixFace')?.checked) neg.push("weird eyes", "asymmetrical face"); if (document.getElementById('fixLimbs')?.checked) neg.push("extra limbs", "missing limbs"); if (document.getElementById('fixBody')?.checked) neg.push("bad proportions"); if (document.getElementById('noHumanParts')?.checked) neg.push("human hands", "human face"); return neg.join(', '); }
     
-    function debouncedUpdateUI() {
-        if (updateTimer) clearTimeout(updateTimer);
-        updateTimer = setTimeout(() => {
-            updateUI();
-            updateTimer = null;
-        }, 16);
-    }
+    function debouncedUpdateUI() { if (updateTimer) clearTimeout(updateTimer); updateTimer = setTimeout(() => { updateUI(); updateTimer = null; }, 16); }
     
     function updateUI() {
         let bl = ["плоская","оч.мал.","маленькая","средняя","большая","огромная"];
-        let breastEl = document.getElementById('breast');
-        let buttEl = document.getElementById('butt');
-        if (breastEl) document.getElementById('breastVal').textContent = bl[breastEl.value] || 'средняя';
-        if (buttEl) document.getElementById('buttVal').textContent = bl[buttEl.value] || 'средняя';
-        
-        let prompt = buildPrompt();
-        document.getElementById('promptResult').innerText = prompt || '(настройте параметры)';
+        let breastEl = document.getElementById('breast'); if (breastEl) document.getElementById('breastVal').textContent = bl[breastEl.value] || 'средняя';
+        let buttEl = document.getElementById('butt'); if (buttEl) document.getElementById('buttVal').textContent = bl[buttEl.value] || 'средняя';
+        let prompt = buildPrompt(); document.getElementById('promptResult').innerText = prompt || '(настройте параметры)';
         document.getElementById('negPromptText').innerText = buildNegative();
-        
-        if (document.getElementById('autoCopy')?.checked && prompt) {
-            navigator.clipboard?.writeText(prompt).catch(()=>{});
-        }
+        if (document.getElementById('autoCopy')?.checked && prompt) { navigator.clipboard?.writeText(prompt).catch(()=>{}); }
         if (document.getElementById('saveSettings')?.checked) saveAllSettings();
     }
     
     function applyPreset(name) {
-        let p = presets[name];
-        if (!p) return;
+        let p = presets[name]; if (!p) return;
         clearAllCheckboxes();
-        for (let k in p) {
-            if (k === 'breast' || k === 'butt') document.getElementById(k).value = p[k];
-            else if (checkboxGroups.includes(k)) {
-                let vals = Array.isArray(p[k]) ? p[k] : [p[k]];
-                let expanded = [];
-                vals.forEach(v => {
-                    if (typeof v === 'string' && v.includes(',')) {
-                        expanded.push(...v.split(',').map(s => s.trim()));
-                    } else {
-                        expanded.push(v);
-                    }
-                });
-                setSelectedCheckboxValues(k, expanded);
-            } else {
-                let s = document.getElementById(k);
-                if (s) s.value = p[k];
-            }
-        }
-        updateUI();
+        if (document.getElementById('mlpAnatomy')) document.getElementById('mlpAnatomy').checked = false;
+        if (document.getElementById('feralAnatomy')) document.getElementById('feralAnatomy').checked = false;
+        for (let k in p) { if (k === 'breast' || k === 'butt') document.getElementById(k).value = p[k]; else if (k === 'mlpAnatomy' || k === 'feralAnatomy') document.getElementById(k).checked = p[k]; else if (checkboxGroups.includes(k)) { let vals = Array.isArray(p[k]) ? p[k] : [p[k]]; let expanded = []; vals.forEach(v => { if (typeof v === 'string' && v.includes(',')) { expanded.push(...v.split(',').map(s => s.trim())); } else { expanded.push(v); } }); setSelectedCheckboxValues(k, expanded); } else { let s = document.getElementById(k); if (s) s.value = p[k]; } }
+        fixAnatomyConflict(); updateUI();
     }
     
-    function renderSubcategories(tab) {
-        let panel = document.getElementById('subcategoryPanel');
-        if (tab === 'custom' || tab === 'settings') { panel.innerHTML = ''; return; }
-        let cats = tabCategories[tab];
-        if (!cats) { panel.innerHTML = ''; return; }
-        panel.innerHTML = Object.entries(cats).map(([k, v]) => `<button class="sub-btn" data-preset="${v.preset}">${v.label}</button>`).join('');
-        panel.querySelectorAll('.sub-btn').forEach(b => b.addEventListener('click', () => {
-            applyPreset(b.dataset.preset);
-            panel.querySelectorAll('.sub-btn').forEach(x => x.classList.remove('active-sub'));
-            b.classList.add('active-sub');
-            showToast(`✅ ${b.textContent} применён`);
-        }));
-    }
+    function renderSubcategories(tab) { let panel = document.getElementById('subcategoryPanel'); if (tab === 'custom' || tab === 'settings') { panel.innerHTML = ''; return; } let cats = tabCategories[tab]; if (!cats) { panel.innerHTML = ''; return; } panel.innerHTML = Object.entries(cats).map(([k, v]) => `<button class="sub-btn" data-preset="${v.preset}">${v.label}</button>`).join(''); panel.querySelectorAll('.sub-btn').forEach(b => b.addEventListener('click', () => { applyPreset(b.dataset.preset); panel.querySelectorAll('.sub-btn').forEach(x => x.classList.remove('active-sub')); b.classList.add('active-sub'); showToast(`✅ ${b.textContent} применён`); })); }
     
     function switchTab(tab) {
-        currentTab = tab;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-        let setPanel = document.getElementById('settingsPanel');
-        let genPanel = document.getElementById('generatorPanels');
-        let subPanel = document.getElementById('subcategoryPanel');
-        if (tab === 'settings') {
-            setPanel.style.display = 'block';
-            genPanel.style.display = 'none';
-            subPanel.style.display = 'none';
-        } else {
-            setPanel.style.display = 'none';
-            genPanel.style.display = 'block';
-            subPanel.style.display = tab === 'custom' ? 'none' : 'flex';
-            renderSubcategories(tab);
-        }
+        let setPanel = document.getElementById('settingsPanel'); let genPanel = document.getElementById('generatorPanels'); let subPanel = document.getElementById('subcategoryPanel');
+        if (tab === 'settings') { setPanel.style.display = 'block'; genPanel.style.display = 'none'; subPanel.style.display = 'none'; }
+        else { setPanel.style.display = 'none'; genPanel.style.display = 'block'; subPanel.style.display = tab === 'custom' ? 'none' : 'flex'; renderSubcategories(tab); }
     }
     
-    function saveAllSettings() {
-        let settings = {};
-        ['race', 'pose', 'bodyType', 'style', 'background'].forEach(id => {
-            let el = document.getElementById(id);
-            if (el) settings[id] = el.value;
-        });
-        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    function getAllSettings() {
+        let settings = { version: VERSION, theme: document.body.classList.contains('light') ? 'light' : 'dark' };
+        ['race', 'pose', 'bodyType', 'muscles', 'top', 'bottom', 'footwear', 'style', 'clarity', 'framing', 'lighting', 'background'].forEach(id => { let el = document.getElementById(id); if (el) settings[id] = el.value; });
+        settings.breast = document.getElementById('breast')?.value; settings.butt = document.getElementById('butt')?.value;
+        ['mlpAnatomy', 'feralAnatomy', 'fixHands', 'fixFace', 'fixLimbs', 'fixBody', 'noHumanParts', 'strictSharpMode', 'autoCopy', 'saveSettings', 'pornworksMode'].forEach(id => { let el = document.getElementById(id); if (el) settings[id] = el.checked; });
+        checkboxGroups.forEach(group => settings[group] = getSelectedCheckboxValues(group));
+        settings.fixedPrefixTags = document.getElementById('fixedPrefixTags')?.value; settings.fixedSuffixTags = document.getElementById('fixedSuffixTags')?.value; settings.separator = document.getElementById('separator')?.value;
+        return settings;
     }
     
-    function loadAllSettings() {
-        let saved = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-        if (saved) {
-            try {
-                let settings = JSON.parse(saved);
-                for (let k in settings) {
-                    let el = document.getElementById(k);
-                    if (el) el.value = settings[k];
-                }
-            } catch(e) {}
-        }
-    }
-    
-    function loadTheme() {
-        let saved = localStorage.getItem(STORAGE_KEYS.THEME);
-        if (saved === 'light') {
-            document.body.classList.add('light');
-            document.getElementById('themeToggle').innerHTML = '🌙 Тёмная';
-        }
-    }
-    
-    function saveTheme(theme) {
-        localStorage.setItem(STORAGE_KEYS.THEME, theme);
-    }
-    
-    function clearAll() {
-        clearAllCheckboxes();
-        document.getElementById('breast').value = '3';
-        document.getElementById('butt').value = '3';
+    function applySettings(settings) {
+        if (!settings) return;
+        for (let k in settings) { if (k === 'version') continue; let el = document.getElementById(k); if (!el) continue; if (el.type === 'checkbox') el.checked = settings[k]; else if (el.type === 'range' || el.tagName === 'SELECT') el.value = settings[k]; else if (el.type === 'text') el.value = settings[k]; }
+        checkboxGroups.forEach(group => { if (settings[group]) setSelectedCheckboxValues(group, settings[group]); });
+        if (settings.theme === 'light') { document.body.classList.add('light'); document.getElementById('themeToggle').innerHTML = '🌙 Тёмная'; }
         updateUI();
-        showToast('🧹 Очищено');
     }
     
-    function randomize() {
-        document.getElementById('breast').value = Math.floor(Math.random() * 6);
-        document.getElementById('butt').value = Math.floor(Math.random() * 6);
-        updateUI();
-        showToast('🎲 Случайно');
+    function saveAllSettings() { localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(getAllSettings())); }
+    function loadAllSettings() { let saved = localStorage.getItem(STORAGE_KEYS.SETTINGS); if (saved) { try { applySettings(JSON.parse(saved)); showToast('💾 Настройки загружены'); } catch(e) {} } }
+    function saveTheme(theme) { localStorage.setItem(STORAGE_KEYS.THEME, theme); }
+    function loadTheme() { let saved = localStorage.getItem(STORAGE_KEYS.THEME); if (saved === 'light') { document.body.classList.add('light'); document.getElementById('themeToggle').innerHTML = '🌙 Тёмная'; } }
+    function clearAll() { clearAllCheckboxes(); document.getElementById('breast').value = '3'; document.getElementById('butt').value = '3'; ['race', 'pose', 'bodyType', 'muscles', 'top', 'bottom', 'footwear', 'style', 'clarity', 'framing', 'lighting', 'background'].forEach(id => { let el = document.getElementById(id); if (el) el.value = ''; }); updateUI(); showToast('🧹 Очищено'); }
+    function randomize() { ['race','bodyType','style','background'].forEach(id => { let s = document.getElementById(id); if (s && s.options.length > 1) s.selectedIndex = Math.floor(Math.random() * (s.options.length - 1)) + 1; }); document.getElementById('breast').value = Math.floor(Math.random() * 6); document.getElementById('butt').value = Math.floor(Math.random() * 6); checkboxGroups.forEach(g => { let container = document.getElementById(g + 'Group'); if (container) container.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = Math.random() > 0.7); }); updateUI(); showToast('🎲 Случайно'); }
+    function exportSettings() { let a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(getAllSettings(), null, 2)], {type: 'application/json'})); a.download = `gpc_settings_v${VERSION}.json`; a.click(); showToast('💾 Экспорт'); }
+    function importSettings(file) { let r = new FileReader(); r.onload = e => { try { applySettings(JSON.parse(e.target.result)); showToast('📂 Импорт'); } catch(ex) { alert('Ошибка файла'); } }; r.readAsText(file); }
+    
+    function buildDOM() {
+        document.getElementById('generatorPanels').innerHTML = `
+            <div class="grid">
+                <div class="card"><h3>👤 Персонаж</h3><label>Раса</label><select id="race"></select><div class="group-header"><label>Доп. черты</label><span><button type="button" class="select-all-btn" data-group="extraTraits">Все</button><button type="button" class="select-all-btn" data-group="extraTraits" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="extraTraits" data-action="invert">↔️</button></span></div><div id="extraTraitsGroup" class="checkbox-group"></div><label>Поза</label><select id="pose"></select></div>
+                <div class="card"><h3>🍑 Тело</h3><label>Грудь <span id="breastVal" class="range-value">средняя</span></label><input type="range" id="breast" min="0" max="5" value="3"><label>Задница <span id="buttVal" class="range-value">средняя</span></label><input type="range" id="butt" min="0" max="5" value="3"><label>Телосложение</label><select id="bodyType"></select><label>Мускулатура</label><select id="muscles"></select><hr><label><input type="checkbox" id="mlpAnatomy"> 🦄 MLP анатомия</label><label><input type="checkbox" id="feralAnatomy"> 🐺 Ферал анатомия</label></div>
+                <div class="card"><h3>👗 Одежда</h3><label>Верх</label><select id="top"></select><label>Низ</label><select id="bottom"></select><label>Обувь</label><select id="footwear"></select><div class="group-header"><label>Аксессуары</label><span><button type="button" class="select-all-btn" data-group="accessories">Все</button><button type="button" class="select-all-btn" data-group="accessories" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="accessories" data-action="invert">↔️</button></span></div><div id="accessoriesGroup" class="checkbox-group"></div></div>
+                <div class="card"><h3>🎨 Внешность</h3><div class="group-header"><label>Волосы</label><span><button type="button" class="select-all-btn" data-group="hair">Все</button><button type="button" class="select-all-btn" data-group="hair" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="hair" data-action="invert">↔️</button></span></div><div id="hairGroup" class="checkbox-group"></div><div class="group-header"><label>Глаза</label><span><button type="button" class="select-all-btn" data-group="eyes">Все</button><button type="button" class="select-all-btn" data-group="eyes" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="eyes" data-action="invert">↔️</button></span></div><div id="eyesGroup" class="checkbox-group"></div><div class="group-header"><label>Кожа</label><span><button type="button" class="select-all-btn" data-group="skin">Все</button><button type="button" class="select-all-btn" data-group="skin" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="skin" data-action="invert">↔️</button></span></div><div id="skinGroup" class="checkbox-group"></div><div class="group-header"><label>Тату/шрамы</label><span><button type="button" class="select-all-btn" data-group="tattoos">Все</button><button type="button" class="select-all-btn" data-group="tattoos" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="tattoos" data-action="invert">↔️</button></span></div><div id="tattoosGroup" class="checkbox-group"></div></div>
+                <div class="card"><h3>🔥 Действие</h3><div class="group-header"><label>Секс. действие</label><span><button type="button" class="select-all-btn" data-group="action">Все</button><button type="button" class="select-all-btn" data-group="action" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="action" data-action="invert">↔️</button></span></div><div id="actionGroup" class="checkbox-group"></div><div class="group-header"><label>Выражение</label><span><button type="button" class="select-all-btn" data-group="expression">Все</button><button type="button" class="select-all-btn" data-group="expression" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="expression" data-action="invert">↔️</button></span></div><div id="expressionGroup" class="checkbox-group"></div><div class="group-header"><label>Ракурс</label><span><button type="button" class="select-all-btn" data-group="angle">Все</button><button type="button" class="select-all-btn" data-group="angle" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="angle" data-action="invert">↔️</button></span></div><div id="angleGroup" class="checkbox-group"></div><div class="group-header"><label>Эффекты</label><span><button type="button" class="select-all-btn" data-group="effects">Все</button><button type="button" class="select-all-btn" data-group="effects" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="effects" data-action="invert">↔️</button></span></div><div id="effectsGroup" class="checkbox-group"></div></div>
+                <div class="card"><h3>🎬 Техника</h3><label>Стиль</label><select id="style"></select><label>Чёткость</label><select id="clarity"></select><label>Кадрирование</label><select id="framing"></select><label>Освещение</label><select id="lighting"></select><label>Фон</label><select id="background"></select></div>
+            </div>
+            <div class="grid" style="margin-top:1rem;">
+                <div class="card"><h3>🛡️ Анти-артефакты</h3><label><input type="checkbox" id="fixHands" checked> Чистить руки</label><label><input type="checkbox" id="fixFace" checked> Чистить лицо</label><label><input type="checkbox" id="fixLimbs" checked> Лишние конечности</label><label><input type="checkbox" id="fixBody" checked> Пропорции</label><hr><label><input type="checkbox" id="noHumanParts"> 🚫 Запрет человеческих частей</label></div>
+                <div class="card"><h3>⚡ Действия</h3><div class="flex-row"><button id="presetCurvy">🍑 Пышная</button><button id="presetSlim">🦅 Поджарая</button><button id="randomizeBtn">🎲 Случайная</button><button id="clearAllBtn" class="secondary">🧹 Очистить всё</button></div><div class="flex-row"><button id="exportBtn" class="secondary">💾 Экспорт</button><button id="importBtn" class="secondary">📂 Импорт</button><input type="file" id="importFile" accept=".json" style="display:none;"></div><label><input type="checkbox" id="strictSharpMode"> 🔪 Только чёткость</label></div>
+            </div>
+        `;
     }
     
     function init() {
-        // Создаём недостающие элементы DOM
-        if (!document.getElementById('generatorPanels').innerHTML) {
-            document.getElementById('generatorPanels').innerHTML = `
-                <div class="grid">
-                    <div class="card"><h3>👤 Персонаж</h3><label>Раса</label><select id="race"></select><div class="group-header"><label>Доп. черты</label></div><div id="extraTraitsGroup" class="checkbox-group"></div><label>Поза</label><select id="pose"></select></div>
-                    <div class="card"><h3>🍑 Тело</h3><label>Грудь <span id="breastVal" class="range-value">средняя</span></label><input type="range" id="breast" min="0" max="5" value="3"><label>Задница <span id="buttVal" class="range-value">средняя</span></label><input type="range" id="butt" min="0" max="5" value="3"><label>Телосложение</label><select id="bodyType"></select><hr><label><input type="checkbox" id="mlpAnatomy"> 🦄 MLP</label><label><input type="checkbox" id="feralAnatomy"> 🐺 Ферал</label></div>
-                    <div class="card"><h3>👗 Одежда</h3><label>Верх</label><select id="top"></select><label>Низ</label><select id="bottom"></select></div>
-                    <div class="card"><h3>🎨 Внешность</h3><div id="hairGroup" class="checkbox-group"></div><div id="eyesGroup" class="checkbox-group"></div><div id="skinGroup" class="checkbox-group"></div></div>
-                    <div class="card"><h3>🔥 Действие</h3><div id="actionGroup" class="checkbox-group"></div><div id="expressionGroup" class="checkbox-group"></div></div>
-                    <div class="card"><h3>🎬 Техника</h3><label>Стиль</label><select id="style"></select><label>Чёткость</label><select id="clarity"></select><label>Освещение</label><select id="lighting"></select><label>Фон</label><select id="background"></select></div>
-                </div>
-                <div class="grid" style="margin-top:1rem;">
-                    <div class="card"><h3>🛡️ Анти-артефакты</h3><label><input type="checkbox" id="fixHands" checked> Чистить руки</label><label><input type="checkbox" id="fixFace" checked> Чистить лицо</label><label><input type="checkbox" id="noHumanParts"> 🚫 Запрет человека</label></div>
-                    <div class="card"><h3>⚡ Действия</h3><button id="presetCurvy">🍑 Пышная</button> <button id="presetSlim">🦅 Поджарая</button> <button id="randomizeBtn">🎲 Случайная</button> <button id="clearAllBtn">🧹 Очистить</button></div>
-                </div>
-            `;
-        }
-        
-        populateAll();
-        loadModsFromStorage();
-        loadTheme();
-        
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            document.body.classList.toggle('light');
-            let isLight = document.body.classList.contains('light');
-            document.getElementById('themeToggle').innerHTML = isLight ? '🌙 Тёмная' : '☀️ Светлая';
-            saveTheme(isLight ? 'light' : 'dark');
-        });
-        
+        buildDOM(); populateAll(); initSelectAllButtons(); loadModsFromStorage(); loadTheme();
+        document.getElementById('themeToggle').addEventListener('click', () => { document.body.classList.toggle('light'); let isLight = document.body.classList.contains('light'); document.getElementById('themeToggle').innerHTML = isLight ? '🌙 Тёмная' : '☀️ Светлая'; saveTheme(isLight ? 'light' : 'dark'); });
         document.getElementById('regenerateBtn').addEventListener('click', () => debouncedUpdateUI());
-        document.getElementById('copyBtn').addEventListener('click', () => {
-            let prompt = document.getElementById('promptResult').innerText;
-            if (prompt && prompt !== '(настройте параметры)') {
-                navigator.clipboard?.writeText(prompt).then(() => showToast('📋 Скопировано'));
-            }
-        });
-        document.getElementById('copyNegBtn').addEventListener('click', () => {
-            navigator.clipboard?.writeText(document.getElementById('negPromptText').innerText).then(() => showToast('📋 Негатив скопирован'));
-        });
-        
-        document.getElementById('presetCurvy').addEventListener('click', () => {
-            document.getElementById('breast').value = '4';
-            document.getElementById('butt').value = '4';
-            updateUI();
-        });
-        document.getElementById('presetSlim').addEventListener('click', () => {
-            document.getElementById('breast').value = '1';
-            document.getElementById('butt').value = '1';
-            updateUI();
-        });
+        document.getElementById('copyBtn').addEventListener('click', () => { let p = document.getElementById('promptResult').innerText; if (p && p !== '(настройте параметры)') navigator.clipboard?.writeText(p).then(() => showToast('📋 Скопировано')); else showToast('⚠️ Нечего копировать'); });
+        document.getElementById('copyNegBtn').addEventListener('click', () => navigator.clipboard?.writeText(document.getElementById('negPromptText').innerText).then(() => showToast('📋 Негатив скопирован')));
+        document.getElementById('presetCurvy').addEventListener('click', () => { document.getElementById('breast').value = '4'; document.getElementById('butt').value = '4'; document.getElementById('bodyType').value = 'curvy'; updateUI(); showToast('🍑 Пышная'); });
+        document.getElementById('presetSlim').addEventListener('click', () => { document.getElementById('breast').value = '1'; document.getElementById('butt').value = '1'; document.getElementById('bodyType').value = 'slender'; updateUI(); showToast('🦅 Поджарая'); });
         document.getElementById('randomizeBtn').addEventListener('click', randomize);
         document.getElementById('clearAllBtn').addEventListener('click', clearAll);
-        
+        document.getElementById('exportBtn').addEventListener('click', exportSettings);
+        document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+        document.getElementById('importFile').addEventListener('change', e => { if (e.target.files[0]) importSettings(e.target.files[0]); e.target.value = ''; });
         document.getElementById('loadExtBtn').addEventListener('click', () => document.getElementById('extFile').click());
         document.getElementById('resetExtBtn').addEventListener('click', resetMods);
         document.getElementById('saveModsBtn').addEventListener('click', saveModsToStorage);
-        document.getElementById('extFile').addEventListener('change', e => {
-            for (let f of e.target.files) {
-                let r = new FileReader();
-                r.onload = ev => loadMod(ev.target.result, f.name);
-                r.readAsText(f);
-            }
-            e.target.value = '';
-        });
-        document.getElementById('resetAllSettingsBtn').addEventListener('click', () => {
-            if (confirm('Сбросить ВСЕ сохранения?')) { localStorage.clear(); location.reload(); }
-        });
-        
-        ['breast', 'butt', 'race', 'pose', 'bodyType', 'style', 'clarity', 'lighting', 'background',
-         'fixHands', 'fixFace', 'noHumanParts', 'mlpAnatomy', 'feralAnatomy', 'autoCopy', 'pornworksMode',
-         'fixedPrefixTags', 'fixedSuffixTags', 'separator'].forEach(id => {
-            let el = document.getElementById(id);
-            if (el) el.addEventListener('input', () => debouncedUpdateUI());
-        });
-        
-        checkboxGroups.forEach(group => {
-            let container = document.getElementById(group + 'Group');
-            if (container) container.addEventListener('change', () => debouncedUpdateUI());
-        });
-        
+        document.getElementById('extFile').addEventListener('change', e => { for (let f of e.target.files) { let r = new FileReader(); r.onload = ev => loadMod(ev.target.result, f.name); r.readAsText(f); } e.target.value = ''; });
+        document.getElementById('resetAllSettingsBtn').addEventListener('click', () => { if (confirm('Сбросить ВСЕ сохранения?')) { localStorage.clear(); location.reload(); } });
+        document.getElementById('mlpAnatomy').addEventListener('change', function() { if (this.checked) document.getElementById('feralAnatomy').checked = false; debouncedUpdateUI(); });
+        document.getElementById('feralAnatomy').addEventListener('change', function() { if (this.checked) document.getElementById('mlpAnatomy').checked = false; debouncedUpdateUI(); });
+        ['breast', 'butt', 'race', 'pose', 'bodyType', 'muscles', 'top', 'bottom', 'footwear', 'style', 'clarity', 'framing', 'lighting', 'background', 'fixHands', 'fixFace', 'fixLimbs', 'fixBody', 'noHumanParts', 'strictSharpMode', 'autoCopy', 'pornworksMode', 'fixedPrefixTags', 'fixedSuffixTags', 'separator'].forEach(id => { let el = document.getElementById(id); if (el) el.addEventListener('input', () => debouncedUpdateUI()); });
+        checkboxGroups.forEach(group => { let container = document.getElementById(group + 'Group'); if (container) container.addEventListener('change', () => debouncedUpdateUI()); });
         document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
-        
-        loadAllSettings();
-        switchTab('anthro');
-        updateUI();
-        showToast(`✅ v${VERSION} — МОДЫ РАБОТАЮТ!`, 3000);
+        loadAllSettings(); switchTab('anthro'); updateUI();
+        showToast(`✅ v${VERSION} — ГОТОВО! Загружайте моды с одеждой!`, 3000);
     }
     
     init();
