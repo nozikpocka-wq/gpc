@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>🧬 GPC Hardcore Fantasy v1.7.1 — PW OPTIMIZED</title>
+    <title>🧬 GPC Hardcore Fantasy v1.8 — VALIDATED PW</title>
     <style>
         * { transition: background 0.2s, color 0.2s, opacity 0.2s; box-sizing: border-box; }
         body { font-family: system-ui, 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #0b0b0f; color: #e3e3e8; }
@@ -63,15 +63,19 @@
         .select-all-btn { font-size: 0.7rem; padding: 2px 8px; background: #3a3a5a; margin-left: 5px; }
         .group-header { display: flex; align-items: center; justify-content: space-between; }
         .invert-btn { background: #5a5a7a; }
+        #validationWarnings { background: #2a1f1a; border-left: 4px solid #ff9900; padding: 8px 12px; margin-bottom: 15px; border-radius: 8px; display: none; }
+        body.light #validationWarnings { background: #fff3e0; }
+        #warningsList { margin: 5px 0 0 20px; padding: 0; color: #ddd; font-size: 0.9rem; }
+        body.light #warningsList { color: #333; }
     </style>
 </head>
 <body>
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>🧬 GPC Hardcore Fantasy · v1.7.1 PW</h1>
+        <h1>🧬 GPC Hardcore Fantasy · v1.8 VALIDATED</h1>
         <button id="themeToggle" class="theme-switch">🌙 Светлая тема</button>
     </div>
-    <div class="sub">✅ ОПТИМИЗИРОВАНО ПОД PORNWORKS AI + МОДЫ</div>
+    <div class="sub">✅ ОПТИМИЗИРОВАНО ПОД PORNWORKS AI + УМНАЯ ВАЛИДАЦИЯ МОДОВ</div>
 
     <div class="tabs">
         <button class="tab-btn" data-tab="anthro">🐾 Антропо</button>
@@ -112,7 +116,7 @@
                 <input type="file" id="extFile" accept=".json" style="display:none;" multiple>
                 <div id="extStatus" class="status-msg">✓ Модов: 0</div>
                 <div id="modList" class="mod-list"></div>
-                <hr><pre style="font-size:0.6rem;">Пример: {"tops":[{"v":"crop top","t":"Кроп-топ"}]}</pre>
+                <hr><pre style="font-size:0.6rem;">Пример: {"tops":[{"v":"crop top","t":"Кроп-топ"}]}<br>Можно указывать type/realism для валидации</pre>
             </div>
         </div>
     </div>
@@ -120,6 +124,10 @@
     <div id="generatorPanels"></div>
 
     <div class="output-area">
+        <div id="validationWarnings">
+            <strong style="color:#ffaa00;">⚠️ Предупреждения совместимости:</strong>
+            <ul id="warningsList"></ul>
+        </div>
         <h3>✨ Промпт</h3>
         <div class="prompt-text" id="promptResult">(настройте параметры)</div>
         <div class="flex-row">
@@ -131,7 +139,7 @@
             <code id="negPromptText"></code>
             <button id="copyNegBtn" style="margin-top:6px; background:#555;">Скопировать</button>
         </div>
-        <div class="note">✅ v1.7.1 — ОПТИМИЗАЦИЯ ДЛЯ PORNWORKS AI</div>
+        <div class="note">✅ v1.8 — УМНАЯ ВАЛИДАЦИЯ · СОВМЕСТИМО С МОДАМИ</div>
     </div>
 </div>
 <div id="toast" class="toast-notification">Готово</div>
@@ -140,12 +148,12 @@
 (function() {
     "use strict";
     
-    const VERSION = "1.7.1";
-    const STORAGE_KEYS = { SETTINGS: 'gpc_v171_settings', MODS: 'gpc_v171_mods', THEME: 'gpc_v171_theme' };
+    const VERSION = "1.8";
+    const STORAGE_KEYS = { SETTINGS: 'gpc_v18_settings', MODS: 'gpc_v18_mods', THEME: 'gpc_v18_theme' };
     
     const escapeHtml = (text) => { if (text === undefined || text === null) return ''; const div = document.createElement('div'); div.textContent = String(text); return div.innerHTML; };
     
-    // ПОЛНЫЕ БАЗОВЫЕ ОПЦИИ (ОДЕЖДА ПУСТАЯ - ДЛЯ МОДОВ)
+    // ПОЛНЫЕ БАЗОВЫЕ ОПЦИИ
     const baseOptions = {
         race: [{v:"", t:"— выберите —"},{v:"human female", t:"Человек"},{v:"female demon", t:"Демоница"},{v:"harpy", t:"Гарпия"},{v:"werewolf", t:"Вервольф"},{v:"succubus", t:"Суккуб"},{v:"dark elf", t:"Тёмная эльфийка"},{v:"vampire", t:"Вампирша"},{v:"pony (MLP style)", t:"Пони (MLP)"},{v:"anthro furry cow", t:"Антропо корова"},{v:"anthro horse", t:"Антропо лошадь"},{v:"cat girl", t:"Кошко-девушка"},{v:"tiger beastfolk", t:"Тигр-ферал"},{v:"lion beastfolk", t:"Лев-ферал"}],
         extraTraits: [{v:"horns", t:"рога"},{v:"wings", t:"крылья"},{v:"tail", t:"хвост"},{v:"fur", t:"мех"},{v:"alicorn, wings, horn", t:"аликорн (MLP)"},{v:"pegasus, wings", t:"пегас (MLP)"},{v:"unicorn, horn", t:"единорог (MLP)"},{v:"earth pony", t:"земная пони (MLP)"},{v:"horse ears, tail", t:"уши и хвост лошади"},{v:"cat ears, tail", t:"кошачьи уши и хвост"},{v:"claws", t:"когти"},{v:"pointed ears", t:"заострённые уши"},{v:"fangs", t:"клыки"},{v:"magic aura", t:"магическая аура"},{v:"wolf head", t:"волчья голова"},{v:"stripes", t:"полосы"},{v:"feline face", t:"кошачье лицо"},{v:"mane", t:"грива"}],
@@ -169,6 +177,44 @@
         framing: [{v:"", t:"— по умолчанию —"},{v:"medium shot", t:"по пояс"},{v:"close-up", t:"крупный план"},{v:"cowboy shot", t:"кавалерийский план"}],
         lighting: [{v:"", t:"— по умолчанию —"},{v:"soft studio lighting", t:"💡 Студийный свет (PW)"},{v:"volumetric lighting", t:"✨ Объёмный свет (PW)"},{v:"cinematic lighting", t:"🎬 Кинематографичный свет (PW)"},{v:"dramatic shadows", t:"🌑 Жёсткие тени (PW)"},{v:"neon lights", t:"💜 Неоновый свет (PW)"},{v:"natural sunlight", t:"☀️ Естественный свет (PW)"}],
         background: [{v:"", t:"— по умолчанию —"},{v:"simple background", t:"простой фон"},{v:"dark dungeon", t:"тёмное подземелье"},{v:"cloudsdale", t:"Клаудсдейл"},{v:"barn", t:"амбар"},{v:"cottage", t:"коттедж"},{v:"carousel boutique", t:"бутик Карусель"}]
+    };
+    
+    // МЕТАДАННЫЕ ДЛЯ ВАЛИДАЦИИ
+    const baseMetadata = {
+        raceTypes: new Map([
+            ['', 'humanoid'],
+            ['human female', 'humanoid'],
+            ['female demon', 'humanoid'],
+            ['harpy', 'humanoid'],
+            ['werewolf', 'anthropomorphic'],
+            ['succubus', 'humanoid'],
+            ['dark elf', 'humanoid'],
+            ['vampire', 'humanoid'],
+            ['pony (MLP style)', 'pony'],
+            ['anthro furry cow', 'anthropomorphic'],
+            ['anthro horse', 'anthropomorphic'],
+            ['cat girl', 'anthropomorphic'],
+            ['tiger beastfolk', 'feral'],
+            ['lion beastfolk', 'feral']
+        ]),
+        styleRealism: new Map([
+            ['', 0.5],
+            ['photorealistic', 1.0],
+            ['hyperrealistic', 1.0],
+            ['raw photo', 1.0],
+            ['cinematic', 0.9],
+            ['anime style', 0.3],
+            ['hentai style', 0.4],
+            ['digital painting', 0.7],
+            ['dark fantasy art', 0.7]
+        ])
+    };
+    
+    // ХРАНИЛИЩЕ МЕТАДАННЫХ МОДОВ
+    let modMetadata = {
+        races: new Map(),
+        styles: new Map(),
+        traits: new Map()
     };
     
     const checkboxGroups = ['extraTraits', 'accessories', 'hair', 'eyes', 'skin', 'tattoos', 'action', 'expression', 'angle', 'effects'];
@@ -236,18 +282,93 @@
         let label = document.createElement('label'); label.innerHTML = `<input type="checkbox" value="${escapeHtml(valueStr)}"> ${escapeHtml(textStr)}`; container.appendChild(label); return true;
     }
     
+    // РАСШИРЕННАЯ ЗАГРУЗКА МОДОВ С МЕТАДАННЫМИ
     function loadMod(json, fname='mod') {
-        try{ let cfg = JSON.parse(json), added = 0;
-            for (let groupId of checkboxGroups) { if (cfg[groupId] && Array.isArray(cfg[groupId])) { for (let it of cfg[groupId]) { if (addOptionToGroup(groupId, it)) added++; } } }
-            const selectMap = {races:'race', poses:'pose', tops:'top', bottoms:'bottom', footwear:'footwear', bodyTypes:'bodyType', muscles:'muscles', styles:'style', clarity:'clarity', framing:'framing', lighting:'lighting', backgrounds:'background'};
-            for (let jk in selectMap) { if (cfg[jk] && Array.isArray(cfg[jk])) { let select = document.getElementById(selectMap[jk]); if (!select) continue; for (let it of cfg[jk]) { let v = (typeof it === 'object' && it !== null) ? String(it.v || it.value || '') : String(it); let t = (typeof it === 'object' && it !== null) ? String(it.t || it.text || it.v || '') : String(it); if (v && !Array.from(select.options).some(o => o.value === v)) { select.appendChild(new Option(t, v)); added++; } } } }
-            if(added) { modCounter++; loadedMods.push({name:fname, added}); updateModList(); document.getElementById('extStatus').innerText = `✓ Модов: ${modCounter} (+${added})`; showToast(`📁 ${fname} +${added}`); saveAllSettings(); } else { showToast(`⚠️ ${fname} без новых опций`); }
+        try {
+            let cfg = JSON.parse(json), added = 0;
+            
+            // Расы с типом
+            if (cfg.races && Array.isArray(cfg.races)) {
+                let select = document.getElementById('race');
+                for (let it of cfg.races) {
+                    let v = (typeof it === 'object') ? String(it.v || it.value) : String(it);
+                    let t = (typeof it === 'object') ? String(it.t || it.text || v) : String(v);
+                    if (v && !Array.from(select.options).some(o => o.value === v)) {
+                        select.appendChild(new Option(t, v));
+                        added++;
+                        if (it.type) modMetadata.races.set(v, { type: it.type });
+                    }
+                }
+            }
+            
+            // Стили с реализмом
+            if (cfg.styles && Array.isArray(cfg.styles)) {
+                let select = document.getElementById('style');
+                for (let it of cfg.styles) {
+                    let v = (typeof it === 'object') ? String(it.v || it.value) : String(it);
+                    let t = (typeof it === 'object') ? String(it.t || it.text || v) : String(v);
+                    if (v && !Array.from(select.options).some(o => o.value === v)) {
+                        select.appendChild(new Option(t, v));
+                        added++;
+                        if (it.realism !== undefined) modMetadata.styles.set(v, { realism: parseFloat(it.realism) });
+                    }
+                }
+            }
+            
+            // Доп черты с анатомией
+            if (cfg.extraTraits && Array.isArray(cfg.extraTraits)) {
+                for (let it of cfg.extraTraits) {
+                    if (addOptionToGroup('extraTraits', it)) {
+                        added++;
+                        if (it.anatomy) {
+                            let v = (typeof it === 'object') ? String(it.v) : String(it);
+                            modMetadata.traits.set(v, { anatomy: it.anatomy });
+                        }
+                    }
+                }
+            }
+            
+            // Остальные группы чекбоксов
+            for (let groupId of checkboxGroups) {
+                if (groupId === 'extraTraits') continue;
+                if (cfg[groupId] && Array.isArray(cfg[groupId])) {
+                    for (let it of cfg[groupId]) if (addOptionToGroup(groupId, it)) added++;
+                }
+            }
+            
+            // Селекты без метаданных
+            const selectMap = {poses:'pose', tops:'top', bottoms:'bottom', footwear:'footwear', bodyTypes:'bodyType', muscles:'muscles', clarity:'clarity', framing:'framing', lighting:'lighting', backgrounds:'background'};
+            for (let jk in selectMap) {
+                if (cfg[jk] && Array.isArray(cfg[jk])) {
+                    let select = document.getElementById(selectMap[jk]);
+                    if (!select) continue;
+                    for (let it of cfg[jk]) {
+                        let v = (typeof it === 'object') ? String(it.v || it.value) : String(it);
+                        let t = (typeof it === 'object') ? String(it.t || it.text || v) : String(v);
+                        if (v && !Array.from(select.options).some(o => o.value === v)) {
+                            select.appendChild(new Option(t, v));
+                            added++;
+                        }
+                    }
+                }
+            }
+            
+            if(added) {
+                modCounter++;
+                loadedMods.push({name:fname, added});
+                updateModList();
+                document.getElementById('extStatus').innerText = `✓ Модов: ${modCounter} (+${added})`;
+                showToast(`📁 ${fname} +${added}`);
+                saveAllSettings();
+            } else {
+                showToast(`⚠️ ${fname} без новых опций`);
+            }
         } catch(e) { alert('JSON ошибка: ' + e.message); }
     }
     
     function updateModList() { let l = document.getElementById('modList'); if(!l) return; if(!loadedMods.length) { l.innerHTML = '<div style="color:#aaa;">Нет модов</div>'; return; } l.innerHTML = loadedMods.map((m,i) => `<div class="mod-item"><span>📦 ${escapeHtml(m.name)} (+${m.added})</span><button data-index="${i}" class="remove-mod-btn">✖</button></div>`).join(''); l.querySelectorAll('.remove-mod-btn').forEach(btn => { btn.addEventListener('click', () => { let idx = parseInt(btn.dataset.index); if(idx >= 0 && idx < loadedMods.length) { loadedMods.splice(idx, 1); modCounter = loadedMods.length; document.getElementById('extStatus').innerText = `✓ Модов: ${modCounter}`; updateModList(); saveAllSettings(); showToast('Мод удалён'); } }); }); }
     
-    function resetMods() { if (!confirm('Сбросить все моды?')) return; loadedMods = []; modCounter = 0; document.getElementById('extStatus').innerText = '✓ Модов: 0'; updateModList(); populateAll(); saveAllSettings(); showToast('Моды сброшены'); }
+    function resetMods() { if (!confirm('Сбросить все моды?')) return; loadedMods = []; modCounter = 0; modMetadata = { races: new Map(), styles: new Map(), traits: new Map() }; document.getElementById('extStatus').innerText = '✓ Модов: 0'; updateModList(); populateAll(); saveAllSettings(); showToast('Моды сброшены'); }
     
     function saveModsToStorage() { localStorage.setItem(STORAGE_KEYS.MODS, JSON.stringify(loadedMods)); showToast('💾 Моды сохранены'); }
     
@@ -258,24 +379,118 @@
     
     function fixAnatomyConflict() { const mlp = document.getElementById('mlpAnatomy'); const feral = document.getElementById('feralAnatomy'); if (mlp && feral && mlp.checked && feral.checked) { feral.checked = false; showToast('⚠️ MLP и Ферал анатомии несовместимы', 1500); } }
     
+    // ========== УМНАЯ ВАЛИДАЦИЯ ==========
+    function getRaceType(raceValue) {
+        if (!raceValue) return 'humanoid';
+        if (modMetadata.races.has(raceValue)) return modMetadata.races.get(raceValue).type;
+        if (baseMetadata.raceTypes.has(raceValue)) return baseMetadata.raceTypes.get(raceValue);
+        const lower = raceValue.toLowerCase();
+        if (lower.includes('pony') || lower.includes('mlp') || lower.includes('equine')) return 'pony';
+        if (lower.includes('feral') || lower.includes('beast') || lower.includes('wolf') || lower.includes('tiger') || lower.includes('lion')) return 'feral';
+        if (lower.includes('anthro') || lower.includes('furry')) return 'anthropomorphic';
+        return 'humanoid';
+    }
+    
+    function getStyleRealism(styleValue) {
+        if (!styleValue) return 0.5;
+        if (modMetadata.styles.has(styleValue)) return modMetadata.styles.get(styleValue).realism;
+        if (baseMetadata.styleRealism.has(styleValue)) return baseMetadata.styleRealism.get(styleValue);
+        const lower = styleValue.toLowerCase();
+        if (lower.includes('photo') || lower.includes('realistic') || lower.includes('raw')) return 1.0;
+        if (lower.includes('anime') || lower.includes('hentai') || lower.includes('cartoon')) return 0.3;
+        if (lower.includes('3d') || lower.includes('render')) return 0.8;
+        return 0.5;
+    }
+    
+    function validatePromptCompatibility() {
+        const warnings = [];
+        const raceValue = document.getElementById('race')?.value || '';
+        const raceType = getRaceType(raceValue);
+        const mlpAnatomy = document.getElementById('mlpAnatomy')?.checked || false;
+        const feralAnatomy = document.getElementById('feralAnatomy')?.checked || false;
+        const styleValue = document.getElementById('style')?.value || '';
+        const styleRealism = getStyleRealism(styleValue);
+        const extraTraits = getSelectedCheckboxValues('extraTraits');
+        
+        const allSelectedTags = [
+            raceValue, ...extraTraits,
+            ...getSelectedCheckboxValues('action'), ...getSelectedCheckboxValues('expression'),
+            ...getSelectedCheckboxValues('angle'), ...getSelectedCheckboxValues('effects'),
+            document.getElementById('pose')?.value, document.getElementById('bodyType')?.value
+        ].filter(Boolean);
+        
+        // Правило 1: конфликт расы и анатомии
+        if (raceType === 'humanoid' && (mlpAnatomy || feralAnatomy)) {
+            warnings.push('Человеческая раса несовместима с анатомией MLP/ферала. Галочки сняты.');
+            document.getElementById('mlpAnatomy').checked = false;
+            document.getElementById('feralAnatomy').checked = false;
+        }
+        if (raceType === 'pony' && feralAnatomy) {
+            warnings.push('Пони и ферал анатомия несовместимы. Ферал отключён.');
+            document.getElementById('feralAnatomy').checked = false;
+        }
+        if (raceType === 'feral' && mlpAnatomy) {
+            warnings.push('Ферал и MLP анатомия несовместимы. MLP отключена.');
+            document.getElementById('mlpAnatomy').checked = false;
+        }
+        
+        // Правило 2: стиль реализма
+        if ((raceType === 'pony' || raceType === 'feral') && styleRealism > 0.7) {
+            warnings.push(`Для ${raceType === 'pony' ? 'пони' : 'фералов'} не рекомендуется фотореализм. Лучше аниме/хентай/цифровой стиль.`);
+        }
+        
+        // Правило 3: одежда на фералах
+        if (raceType === 'feral') {
+            const top = document.getElementById('top')?.value;
+            const bottom = document.getElementById('bottom')?.value;
+            const footwear = document.getElementById('footwear')?.value;
+            if (top && top !== '— загрузите мод —') warnings.push('Фералам не рекомендуется человеческая одежда (верх).');
+            if (bottom && bottom !== '— загрузите мод —') warnings.push('Фералам не рекомендуется человеческая одежда (низ).');
+            if (footwear && footwear !== '— загрузите мод —') warnings.push('Обувь для фералов обычно не используется.');
+        }
+        
+        // Правило 4: запрещённые теги PW
+        const bannedPatterns = [/loli/i, /child/i, /shota/i, /underage/i, /rape/i, /nonconsent/i, /incest/i];
+        for (let tag of allSelectedTags) {
+            if (bannedPatterns.some(p => p.test(tag))) warnings.push(`Тег "${tag}" может привести к блокировке на PornWorks.`);
+        }
+        
+        // Правило 5: аликорн + ферал
+        if (extraTraits.some(t => t.includes('alicorn')) && feralAnatomy) {
+            warnings.push('Аликорн — это пони, ферал анатомия конфликтует.');
+            document.getElementById('feralAnatomy').checked = false;
+        }
+        
+        return warnings;
+    }
+    
+    function displayWarnings(warnings) {
+        const panel = document.getElementById('validationWarnings');
+        const list = document.getElementById('warningsList');
+        if (!panel || !list) return;
+        if (warnings.length === 0) { panel.style.display = 'none'; return; }
+        list.innerHTML = warnings.map(w => `<li>⚠️ ${escapeHtml(w)}</li>`).join('');
+        panel.style.display = 'block';
+    }
+    
     function buildPrompt() {
+        // Валидация + отображение предупреждений
+        const warnings = validatePromptCompatibility();
+        displayWarnings(warnings);
         fixAnatomyConflict();
+        
         let parts = [], sep = document.getElementById('separator')?.value || ', ';
         let isPWMode = document.getElementById('pornworksMode')?.checked;
         
-        // 1. Субъект
         let race = document.getElementById('race')?.value;
         if (race) parts.push(race);
         
-        // 2. Доп. черты
         let extra = getSelectedCheckboxValues('extraTraits');
         if (extra.length) parts.push(extra.join(' '));
         
-        // 3. Анатомия
         if (document.getElementById('mlpAnatomy')?.checked) parts.push('equine anatomy', 'pony body');
         if (document.getElementById('feralAnatomy')?.checked) parts.push('feral anatomy');
         
-        // 4. Одежда и аксессуары
         let top = document.getElementById('top')?.value;
         let bottom = document.getElementById('bottom')?.value;
         let foot = document.getElementById('footwear')?.value;
@@ -285,25 +500,21 @@
         let acc = getSelectedCheckboxValues('accessories');
         if (acc.length) parts.push(acc.join(' '));
         
-        // 5. Тело
         parts.push(getBreastTag(parseInt(document.getElementById('breast')?.value || 3)));
         parts.push(getButtTag(parseInt(document.getElementById('butt')?.value || 3)));
         let body = document.getElementById('bodyType')?.value;
         if (body) parts.push(body);
         
-        // 6. Внешность
         ['hair', 'eyes', 'skin', 'tattoos'].forEach(g => {
             let vals = getSelectedCheckboxValues(g);
             if (vals.length) parts.push(vals.join(' '));
         });
         
-        // 7. Поза и действие
         let action = getSelectedCheckboxValues('action');
         let pose = document.getElementById('pose')?.value;
         if (action.length) parts.push(action.join(' '));
         else if (pose) parts.push(pose);
         
-        // 8. Выражение, ракурс, эффекты
         let expr = getSelectedCheckboxValues('expression');
         let angle = getSelectedCheckboxValues('angle');
         let eff = getSelectedCheckboxValues('effects');
@@ -311,7 +522,6 @@
         if (angle.length) parts.push(angle.join(' '));
         if (eff.length) parts.push(eff.join(' '));
         
-        // 9. Стиль, качество, фон
         let style = document.getElementById('style')?.value;
         let clarity = document.getElementById('clarity')?.value;
         let framing = document.getElementById('framing')?.value;
@@ -339,9 +549,7 @@
             if (prefix) prompt = prefix + sep + prompt;
             if (suffix) prompt = prompt + sep + suffix;
         } else {
-            if (!prompt.startsWith('masterpiece')) {
-                prompt = 'masterpiece, best quality, ultra high res, ' + prompt;
-            }
+            if (!prompt.startsWith('masterpiece')) prompt = 'masterpiece, best quality, ultra high res, ' + prompt;
         }
         
         return prompt.replace(/, ,/g, ',').replace(/,\s*,/g, ',').trim() || '';
@@ -408,17 +616,9 @@
     
     function copyOptimizedForPW() {
         let prompt = document.getElementById('promptResult').innerText;
-        if (!prompt || prompt === '(настройте параметры)') {
-            showToast('⚠️ Сначала сгенерируйте промпт');
-            return;
-        }
-        if (!prompt.startsWith('masterpiece')) {
-            prompt = 'masterpiece, best quality, ultra high res, ' + prompt;
-        }
-        navigator.clipboard?.writeText(prompt).then(() => {
-            showToast('📋 Оптимизированный промпт скопирован! Открываю PornWorks...');
-            setTimeout(() => window.open('https://www.pornworks.ai/generate', '_blank'), 800);
-        });
+        if (!prompt || prompt === '(настройте параметры)') { showToast('⚠️ Сначала сгенерируйте промпт'); return; }
+        if (!prompt.startsWith('masterpiece')) prompt = 'masterpiece, best quality, ultra high res, ' + prompt;
+        navigator.clipboard?.writeText(prompt).then(() => { showToast('📋 Скопировано! Открываю PornWorks...'); setTimeout(() => window.open('https://www.pornworks.ai/generate', '_blank'), 800); });
     }
     
     function buildDOM() {
@@ -433,32 +633,14 @@
             </div>
             <div class="grid" style="margin-top:1rem;">
                 <div class="card"><h3>🛡️ Анти-артефакты</h3><label><input type="checkbox" id="fixHands" checked> Чистить руки</label><label><input type="checkbox" id="fixFace" checked> Чистить лицо</label><label><input type="checkbox" id="fixLimbs" checked> Лишние конечности</label><label><input type="checkbox" id="fixBody" checked> Пропорции</label><hr><label><input type="checkbox" id="noHumanParts"> 🚫 Запрет человеческих частей</label></div>
-               <div class="card">
-    <h3>⚡ Действия</h3>
-    <div class="flex-row">
-        <button id="presetCurvy">🍑 Пышная</button>
-        <button id="presetSlim">🦅 Поджарая</button>
-        <button id="randomizeBtn">🎲 Случайная</button>
-        <button id="clearAllBtn" class="secondary">🧹 Очистить всё</button>
-    </div>
-    <div class="flex-row">
-        <button id="exportBtn" class="secondary">💾 Экспорт</button>
-        <button id="importBtn" class="secondary">📂 Импорт</button>
-        <input type="file" id="importFile" accept=".json" style="display:none;">
-    </div>
-    <label><input type="checkbox" id="strictSharpMode"> 🔪 Только чёткость</label>
-    <div class="flex-row" style="margin-top: 8px;">
-        <button onclick="copyOptimizedForPW()" style="background: #f0a; padding: 8px 12px; border-radius: 40px; border: none; color: white; font-weight: bold; cursor: pointer;">🔥 PornWorks</button>
-        <button onclick="window.open('https://perchance.org/ai-image-generator','_blank')" style="background: #6b5b95; padding: 8px 12px; border-radius: 40px; border: none; color: white; font-weight: bold; cursor: pointer;">🖼️ Perchance</button>
-    </div>
-</div> 
+               <div class="card"><h3>⚡ Действия</h3><div class="flex-row"><button id="presetCurvy">🍑 Пышная</button><button id="presetSlim">🦅 Поджарая</button><button id="randomizeBtn">🎲 Случайная</button><button id="clearAllBtn" class="secondary">🧹 Очистить всё</button></div><div class="flex-row"><button id="exportBtn" class="secondary">💾 Экспорт</button><button id="importBtn" class="secondary">📂 Импорт</button><input type="file" id="importFile" accept=".json" style="display:none;"></div><label><input type="checkbox" id="strictSharpMode"> 🔪 Только чёткость</label><div class="flex-row" style="margin-top:8px;"><button onclick="copyOptimizedForPW()" style="background:#f0a;padding:8px 12px;border-radius:40px;border:none;color:white;font-weight:bold;cursor:pointer;">🔥 PornWorks</button><button onclick="window.open('https://perchance.org/ai-image-generator','_blank')" style="background:#6b5b95;padding:8px 12px;border-radius:40px;border:none;color:white;font-weight:bold;cursor:pointer;">🖼️ Perchance</button></div></div> 
             </div>
         `;
     }
 
     function init() {
         buildDOM(); populateAll(); initSelectAllButtons(); loadModsFromStorage(); loadTheme();
-document.getElementById('themeToggle').addEventListener('click', () => { document.body.classList.toggle('light'); let isLight = document.body.classList.contains('light'); document.getElementById('themeToggle').innerHTML = isLight ? '🌙 Тёмная' : '☀️ Светлая'; saveTheme(isLight ? 'light' : 'dark'); });
+        document.getElementById('themeToggle').addEventListener('click', () => { document.body.classList.toggle('light'); let isLight = document.body.classList.contains('light'); document.getElementById('themeToggle').innerHTML = isLight ? '🌙 Тёмная' : '☀️ Светлая'; saveTheme(isLight ? 'light' : 'dark'); });
         document.getElementById('regenerateBtn').addEventListener('click', () => debouncedUpdateUI());
         document.getElementById('copyBtn').addEventListener('click', () => { let p = document.getElementById('promptResult').innerText; if (p && p !== '(настройте параметры)') navigator.clipboard?.writeText(p).then(() => showToast('📋 Скопировано')); else showToast('⚠️ Нечего копировать'); });
         document.getElementById('copyNegBtn').addEventListener('click', () => navigator.clipboard?.writeText(document.getElementById('negPromptText').innerText).then(() => showToast('📋 Негатив скопирован')));
@@ -480,7 +662,7 @@ document.getElementById('themeToggle').addEventListener('click', () => { documen
         checkboxGroups.forEach(group => { let container = document.getElementById(group + 'Group'); if (container) container.addEventListener('change', () => debouncedUpdateUI()); });
         document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
         loadAllSettings(); switchTab('anthro'); updateUI();
-        showToast(`✅ v${VERSION} — ОПТИМИЗИРОВАНО ДЛЯ PORNWORKS AI`, 3000);      
+        showToast(`✅ v${VERSION} — УМНАЯ ВАЛИДАЦИЯ АКТИВНА`, 3000);      
     }
     
     init();
