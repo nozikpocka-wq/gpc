@@ -379,6 +379,9 @@
         <button onclick="window.open('https://perchance.org/ai-image-generator','_blank')" style="background: #6b5b95; padding: 8px 12px; border-radius: 40px; border: none; color: white; font-weight: bold; cursor: pointer;">🖼️ Perchance</button>
     </div>
 </div> 
+            </div>
+        `;
+    }
 
     function init() {
         buildDOM(); populateAll(); initSelectAllButtons(); loadModsFromStorage(); loadTheme();
@@ -404,7 +407,7 @@ document.getElementById('themeToggle').addEventListener('click', () => { documen
         checkboxGroups.forEach(group => { let container = document.getElementById(group + 'Group'); if (container) container.addEventListener('change', () => debouncedUpdateUI()); });
         document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
         loadAllSettings(); switchTab('anthro'); updateUI();
-        showToast(`✅ v${VERSION} — ГОТОВО! Загружайте моды с одеждой!`, 3000);
+        showToast(`✅ v${VERSION} — ГОТОВО! Загружайте моды с одеждой!`, 3000);      
     }
     
     init();
