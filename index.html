@@ -362,8 +362,10 @@
                 <div class="card"><h3>🛡️ Анти-артефакты</h3><label><input type="checkbox" id="fixHands" checked> Чистить руки</label><label><input type="checkbox" id="fixFace" checked> Чистить лицо</label><label><input type="checkbox" id="fixLimbs" checked> Лишние конечности</label><label><input type="checkbox" id="fixBody" checked> Пропорции</label><hr><label><input type="checkbox" id="noHumanParts"> 🚫 Запрет человеческих частей</label></div>
                 <div class="card"><h3>⚡ Действия</h3><div class="flex-row"><button id="presetCurvy">🍑 Пышная</button><button id="presetSlim">🦅 Поджарая</button><button id="randomizeBtn">🎲 Случайная</button><button id="clearAllBtn" class="secondary">🧹 Очистить всё</button></div><div class="flex-row"><button id="exportBtn" class="secondary">💾 Экспорт</button><button id="importBtn" class="secondary">📂 Импорт</button><input type="file" id="importFile" accept=".json" style="display:none;"></div><label><input type="checkbox" id="strictSharpMode"> 🔪 Только чёткость</label></div>
             </div>
-        `;
-    }
+	<div style="position: fixed; bottom: 80px; right: 20px; display: flex; gap: 8px; z-index: 999;">
+    <button onclick="window.open('https://www.pornworks.ai/generate','_blank')" style="background: #f0a; padding: 10px 15px; border-radius: 40px; border: none; color: white; font-weight: bold;">🔥 PornWorks</button>
+    <button onclick="window.open('https://perchance.org/ai-image-generator','_blank')" style="background: #6b5b95; padding: 10px 15px; border-radius: 40px; border: none; color: white; font-weight: bold;">🖼️ Perchance</button>
+</div>    
     
     function init() {
         buildDOM(); populateAll(); initSelectAllButtons(); loadModsFromStorage(); loadTheme();
