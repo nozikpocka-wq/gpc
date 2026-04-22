@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>🧬 GPC Hardcore Fantasy v1.7 — FULL + MODS</title>
+    <title>🧬 GPC Hardcore Fantasy v1.7.1 — PW OPTIMIZED</title>
     <style>
         * { transition: background 0.2s, color 0.2s, opacity 0.2s; box-sizing: border-box; }
         body { font-family: system-ui, 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #0b0b0f; color: #e3e3e8; }
@@ -68,10 +68,10 @@
 <body>
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>🧬 GPC Hardcore Fantasy · v1.7 FULL + MODS</h1>
+        <h1>🧬 GPC Hardcore Fantasy · v1.7.1 PW</h1>
         <button id="themeToggle" class="theme-switch">🌙 Светлая тема</button>
     </div>
-    <div class="sub">✅ ПОЛНЫЕ ОПЦИИ + PornWorks + МОДЫ (одежда через JSON)</div>
+    <div class="sub">✅ ОПТИМИЗИРОВАНО ПОД PORNWORKS AI + МОДЫ</div>
 
     <div class="tabs">
         <button class="tab-btn" data-tab="anthro">🐾 Антропо</button>
@@ -102,7 +102,7 @@
                 <label>Разделитель</label><input type="text" id="separator" value=", ">
                 <label><input type="checkbox" id="autoCopy"> Автокопирование</label>
                 <hr>
-                <label><input type="checkbox" id="pornworksMode"> 🔥 PornWorks Optimized</label>
+                <label><input type="checkbox" id="pornworksMode"> 🔥 PornWorks Optimized (сборка под PW)</label>
             </div>
             <div class="setting-card">
                 <h3>📁 Расширения JSON</h3>
@@ -131,7 +131,7 @@
             <code id="negPromptText"></code>
             <button id="copyNegBtn" style="margin-top:6px; background:#555;">Скопировать</button>
         </div>
-        <div class="note">✅ v1.7 — ПОЛНЫЕ ОПЦИИ + МОДЫ ДЛЯ ОДЕЖДЫ</div>
+        <div class="note">✅ v1.7.1 — ОПТИМИЗАЦИЯ ДЛЯ PORNWORKS AI</div>
     </div>
 </div>
 <div id="toast" class="toast-notification">Готово</div>
@@ -140,8 +140,8 @@
 (function() {
     "use strict";
     
-    const VERSION = "1.7";
-    const STORAGE_KEYS = { SETTINGS: 'gpc_v17_settings', MODS: 'gpc_v17_mods', THEME: 'gpc_v17_theme' };
+    const VERSION = "1.7.1";
+    const STORAGE_KEYS = { SETTINGS: 'gpc_v171_settings', MODS: 'gpc_v171_mods', THEME: 'gpc_v171_theme' };
     
     const escapeHtml = (text) => { if (text === undefined || text === null) return ''; const div = document.createElement('div'); div.textContent = String(text); return div.innerHTML; };
     
@@ -164,10 +164,10 @@
         expression: [{v:"lustful gaze", t:"похотливый взгляд"},{v:"smiling", t:"улыбается"},{v:"pleasure face", t:"лицо удовольствия"},{v:"surprised", t:"удивлена"},{v:"in pain", t:"боль"},{v:"ahegao", t:"ахэгао"}],
         angle: [{v:"from below", t:"снизу вверх"},{v:"from above", t:"сверху вниз"},{v:"rear view", t:"вид сзади"},{v:"over the shoulder", t:"через плечо"},{v:"close-up", t:"крупный план"},{v:"dutch angle", t:"голландский угол"}],
         effects: [{v:"fog", t:"туман"},{v:"glowing magic", t:"светящаяся магия"},{v:"sweat drops", t:"капли пота"},{v:"sparkles", t:"сверкание"},{v:"smoke", t:"дым"},{v:"rainbow streaks", t:"радужные полосы"}],
-        style: [{v:"", t:"— по умолчанию —"},{v:"anime style", t:"Аниме"},{v:"comic style", t:"Комикс"},{v:"3D render", t:"3D-рендер"},{v:"digital painting", t:"Цифровая живопись"},{v:"dark fantasy art", t:"Dark fantasy"}],
-        clarity: [{v:"", t:"— по умолчанию —"},{v:"sharp focus", t:"чётко"},{v:"8K", t:"8K"},{v:"micro-details", t:"микродетали"}],
+        style: [{v:"", t:"— по умолчанию —"},{v:"photorealistic", t:"📸 Фотореализм (PW)"},{v:"hyperrealistic", t:"🔬 Гиперреализм (PW)"},{v:"raw photo", t:"📷 Сырое фото (PW)"},{v:"cinematic", t:"🎬 Кинематографичный (PW)"},{v:"anime style", t:"🌸 Аниме"},{v:"hentai style", t:"💕 Хентай (PW)"},{v:"digital painting", t:"🖥️ Цифровая живопись"},{v:"dark fantasy art", t:"🌑 Dark fantasy"}],
+        clarity: [{v:"", t:"— по умолчанию —"},{v:"masterpiece, best quality, ultra high res", t:"⭐ PW Quality (полный)"},{v:"8K, hyperdetailed, sharp focus", t:"📊 8K + детали (PW)"},{v:"intricate details, professional", t:"🔍 Профессиональное (PW)"}],
         framing: [{v:"", t:"— по умолчанию —"},{v:"medium shot", t:"по пояс"},{v:"close-up", t:"крупный план"},{v:"cowboy shot", t:"кавалерийский план"}],
-        lighting: [{v:"", t:"— по умолчанию —"},{v:"rim lighting", t:"контровой свет"},{v:"dramatic shadows", t:"жёсткие тени"},{v:"red neon", t:"красный неон"}],
+        lighting: [{v:"", t:"— по умолчанию —"},{v:"soft studio lighting", t:"💡 Студийный свет (PW)"},{v:"volumetric lighting", t:"✨ Объёмный свет (PW)"},{v:"cinematic lighting", t:"🎬 Кинематографичный свет (PW)"},{v:"dramatic shadows", t:"🌑 Жёсткие тени (PW)"},{v:"neon lights", t:"💜 Неоновый свет (PW)"},{v:"natural sunlight", t:"☀️ Естественный свет (PW)"}],
         background: [{v:"", t:"— по умолчанию —"},{v:"simple background", t:"простой фон"},{v:"dark dungeon", t:"тёмное подземелье"},{v:"cloudsdale", t:"Клаудсдейл"},{v:"barn", t:"амбар"},{v:"cottage", t:"коттедж"},{v:"carousel boutique", t:"бутик Карусель"}]
     };
     
@@ -261,31 +261,89 @@
     function buildPrompt() {
         fixAnatomyConflict();
         let parts = [], sep = document.getElementById('separator')?.value || ', ';
-        let race = document.getElementById('race')?.value; if (race) parts.push(race);
-        let extra = getSelectedCheckboxValues('extraTraits'); if (extra.length) parts.push(extra.join(', '));
-        if (document.getElementById('mlpAnatomy')?.checked) parts.push('equine anatomy', 'horse pussy', 'pony body');
-        if (document.getElementById('feralAnatomy')?.checked) parts.push('animal genitalia', 'feral anatomy');
-        let top = document.getElementById('top')?.value; if (top && top !== '— загрузите мод —') parts.push(top);
-        let bottom = document.getElementById('bottom')?.value; if (bottom && bottom !== '— загрузите мод —') parts.push(bottom);
-        let foot = document.getElementById('footwear')?.value; if (foot && foot !== '— загрузите мод —') parts.push(foot);
-        let acc = getSelectedCheckboxValues('accessories'); if (acc.length) parts.push(acc.join(', '));
+        let isPWMode = document.getElementById('pornworksMode')?.checked;
+        
+        // 1. Субъект
+        let race = document.getElementById('race')?.value;
+        if (race) parts.push(race);
+        
+        // 2. Доп. черты
+        let extra = getSelectedCheckboxValues('extraTraits');
+        if (extra.length) parts.push(extra.join(' '));
+        
+        // 3. Анатомия
+        if (document.getElementById('mlpAnatomy')?.checked) parts.push('equine anatomy', 'pony body');
+        if (document.getElementById('feralAnatomy')?.checked) parts.push('feral anatomy');
+        
+        // 4. Одежда и аксессуары
+        let top = document.getElementById('top')?.value;
+        let bottom = document.getElementById('bottom')?.value;
+        let foot = document.getElementById('footwear')?.value;
+        if (top && top !== '— загрузите мод —') parts.push(top);
+        if (bottom && bottom !== '— загрузите мод —') parts.push(bottom);
+        if (foot && foot !== '— загрузите мод —') parts.push(foot);
+        let acc = getSelectedCheckboxValues('accessories');
+        if (acc.length) parts.push(acc.join(' '));
+        
+        // 5. Тело
         parts.push(getBreastTag(parseInt(document.getElementById('breast')?.value || 3)));
         parts.push(getButtTag(parseInt(document.getElementById('butt')?.value || 3)));
-        let body = document.getElementById('bodyType')?.value; if (body) parts.push(body);
-        let musc = document.getElementById('muscles')?.value; if (musc) parts.push(musc);
-        ['hair', 'eyes', 'skin', 'tattoos'].forEach(g => { let vals = getSelectedCheckboxValues(g); if (vals.length) parts.push(vals.join(', ')); });
-        let action = getSelectedCheckboxValues('action'); let pose = document.getElementById('pose')?.value; if (action.length) parts.push(action.join(', ')); else if (pose) parts.push(pose);
-        let expr = getSelectedCheckboxValues('expression'); if (expr.length) parts.push(expr.join(', '));
-        let angle = getSelectedCheckboxValues('angle'); if (angle.length) parts.push(angle.join(', '));
-        let eff = getSelectedCheckboxValues('effects'); if (eff.length) parts.push(eff.join(', '));
-        let style = document.getElementById('style')?.value; if (style) parts.push(style);
-        let clarity = document.getElementById('clarity')?.value; if (clarity) parts.push(clarity);
-        let framing = document.getElementById('framing')?.value; if (framing) parts.push(framing);
-        let light = document.getElementById('lighting')?.value; if (light) parts.push(light);
-        let bg = document.getElementById('background')?.value; if (bg) parts.push(bg);
-        if (document.getElementById('strictSharpMode')?.checked) { style = 'sharp lines, clean lineart'; clarity = '8K, ultra HD'; }
-        let filtered = parts.filter(p => p && p.trim() !== ''); let prompt = filtered.join(sep);
-        if (document.getElementById('pornworksMode')?.checked) { prompt = 'masterpiece, best quality, ultra high res, ' + prompt; } else { let prefix = document.getElementById('fixedPrefixTags')?.value.trim(); let suffix = document.getElementById('fixedSuffixTags')?.value.trim(); if (prefix) prompt = prefix + sep + prompt; if (suffix) prompt = prompt + sep + suffix; }
+        let body = document.getElementById('bodyType')?.value;
+        if (body) parts.push(body);
+        
+        // 6. Внешность
+        ['hair', 'eyes', 'skin', 'tattoos'].forEach(g => {
+            let vals = getSelectedCheckboxValues(g);
+            if (vals.length) parts.push(vals.join(' '));
+        });
+        
+        // 7. Поза и действие
+        let action = getSelectedCheckboxValues('action');
+        let pose = document.getElementById('pose')?.value;
+        if (action.length) parts.push(action.join(' '));
+        else if (pose) parts.push(pose);
+        
+        // 8. Выражение, ракурс, эффекты
+        let expr = getSelectedCheckboxValues('expression');
+        let angle = getSelectedCheckboxValues('angle');
+        let eff = getSelectedCheckboxValues('effects');
+        if (expr.length) parts.push(expr.join(' '));
+        if (angle.length) parts.push(angle.join(' '));
+        if (eff.length) parts.push(eff.join(' '));
+        
+        // 9. Стиль, качество, фон
+        let style = document.getElementById('style')?.value;
+        let clarity = document.getElementById('clarity')?.value;
+        let framing = document.getElementById('framing')?.value;
+        let light = document.getElementById('lighting')?.value;
+        let bg = document.getElementById('background')?.value;
+        
+        if (isPWMode) {
+            if (!style) style = 'photorealistic';
+            if (!clarity) clarity = 'masterpiece, best quality, ultra high res, 8K, sharp focus';
+            if (!light) light = 'soft studio lighting';
+        }
+        
+        if (style) parts.push(style);
+        if (clarity) parts.push(clarity);
+        if (framing) parts.push(framing);
+        if (light) parts.push(light);
+        if (bg) parts.push(bg);
+        
+        let filtered = parts.filter(p => p && p.trim() !== '');
+        let prompt = filtered.join(isPWMode ? ', ' : sep);
+        
+        if (!isPWMode) {
+            let prefix = document.getElementById('fixedPrefixTags')?.value.trim();
+            let suffix = document.getElementById('fixedSuffixTags')?.value.trim();
+            if (prefix) prompt = prefix + sep + prompt;
+            if (suffix) prompt = prompt + sep + suffix;
+        } else {
+            if (!prompt.startsWith('masterpiece')) {
+                prompt = 'masterpiece, best quality, ultra high res, ' + prompt;
+            }
+        }
+        
         return prompt.replace(/, ,/g, ',').replace(/,\s*,/g, ',').trim() || '';
     }
     
@@ -348,6 +406,21 @@
     function exportSettings() { let a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(getAllSettings(), null, 2)], {type: 'application/json'})); a.download = `gpc_settings_v${VERSION}.json`; a.click(); showToast('💾 Экспорт'); }
     function importSettings(file) { let r = new FileReader(); r.onload = e => { try { applySettings(JSON.parse(e.target.result)); showToast('📂 Импорт'); } catch(ex) { alert('Ошибка файла'); } }; r.readAsText(file); }
     
+    function copyOptimizedForPW() {
+        let prompt = document.getElementById('promptResult').innerText;
+        if (!prompt || prompt === '(настройте параметры)') {
+            showToast('⚠️ Сначала сгенерируйте промпт');
+            return;
+        }
+        if (!prompt.startsWith('masterpiece')) {
+            prompt = 'masterpiece, best quality, ultra high res, ' + prompt;
+        }
+        navigator.clipboard?.writeText(prompt).then(() => {
+            showToast('📋 Оптимизированный промпт скопирован! Открываю PornWorks...');
+            setTimeout(() => window.open('https://www.pornworks.ai/generate', '_blank'), 800);
+        });
+    }
+    
     function buildDOM() {
         document.getElementById('generatorPanels').innerHTML = `
             <div class="grid">
@@ -375,7 +448,7 @@
     </div>
     <label><input type="checkbox" id="strictSharpMode"> 🔪 Только чёткость</label>
     <div class="flex-row" style="margin-top: 8px;">
-        <button onclick="window.open('https://www.pornworks.ai/generate','_blank')" style="background: #f0a; padding: 8px 12px; border-radius: 40px; border: none; color: white; font-weight: bold; cursor: pointer;">🔥 PornWorks</button>
+        <button onclick="copyOptimizedForPW()" style="background: #f0a; padding: 8px 12px; border-radius: 40px; border: none; color: white; font-weight: bold; cursor: pointer;">🔥 PornWorks</button>
         <button onclick="window.open('https://perchance.org/ai-image-generator','_blank')" style="background: #6b5b95; padding: 8px 12px; border-radius: 40px; border: none; color: white; font-weight: bold; cursor: pointer;">🖼️ Perchance</button>
     </div>
 </div> 
@@ -407,7 +480,7 @@ document.getElementById('themeToggle').addEventListener('click', () => { documen
         checkboxGroups.forEach(group => { let container = document.getElementById(group + 'Group'); if (container) container.addEventListener('change', () => debouncedUpdateUI()); });
         document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
         loadAllSettings(); switchTab('anthro'); updateUI();
-        showToast(`✅ v${VERSION} — ГОТОВО! Загружайте моды с одеждой!`, 3000);      
+        showToast(`✅ v${VERSION} — ОПТИМИЗИРОВАНО ДЛЯ PORNWORKS AI`, 3000);      
     }
     
     init();
