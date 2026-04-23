@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>🧬 GPC Hardcore Fantasy v1.8 — VALIDATED PW</title>
+    <title>🧬 GPC Hardcore Fantasy v1.9 — SDXL PW</title>
     <style>
         * { transition: background 0.2s, color 0.2s, opacity 0.2s; box-sizing: border-box; }
         body { font-family: system-ui, 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #0b0b0f; color: #e3e3e8; }
@@ -72,10 +72,10 @@
 <body>
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>🧬 GPC Hardcore Fantasy · v1.8 VALIDATED</h1>
+        <h1>🧬 GPC Hardcore Fantasy · v1.9 SDXL</h1>
         <button id="themeToggle" class="theme-switch">🌙 Светлая тема</button>
     </div>
-    <div class="sub">✅ ОПТИМИЗИРОВАНО ПОД PORNWORKS AI + УМНАЯ ВАЛИДАЦИЯ МОДОВ</div>
+    <div class="sub">✅ ОПТИМИЗИРОВАНО ПОД PORNWORKS AI SDXL + УМНАЯ ВАЛИДАЦИЯ МОДОВ</div>
 
     <div class="tabs">
         <button class="tab-btn" data-tab="anthro">🐾 Антропо</button>
@@ -107,6 +107,7 @@
                 <label><input type="checkbox" id="autoCopy"> Автокопирование</label>
                 <hr>
                 <label><input type="checkbox" id="pornworksMode"> 🔥 PornWorks Optimized (сборка под PW)</label>
+                <label><input type="checkbox" id="sdxlMode"> 🧠 SDXL Natural Language Mode</label>
             </div>
             <div class="setting-card">
                 <h3>📁 Расширения JSON</h3>
@@ -139,7 +140,7 @@
             <code id="negPromptText"></code>
             <button id="copyNegBtn" style="margin-top:6px; background:#555;">Скопировать</button>
         </div>
-        <div class="note">✅ v1.8 — УМНАЯ ВАЛИДАЦИЯ · СОВМЕСТИМО С МОДАМИ</div>
+        <div class="note">✅ v1.9 — SDXL NATURAL LANGUAGE + ВЕСА + ВАЛИДАЦИЯ</div>
     </div>
 </div>
 <div id="toast" class="toast-notification">Готово</div>
@@ -148,8 +149,8 @@
 (function() {
     "use strict";
     
-    const VERSION = "1.8";
-    const STORAGE_KEYS = { SETTINGS: 'gpc_v18_settings', MODS: 'gpc_v18_mods', THEME: 'gpc_v18_theme' };
+    const VERSION = "1.9";
+    const STORAGE_KEYS = { SETTINGS: 'gpc_v19_settings', MODS: 'gpc_v19_mods', THEME: 'gpc_v19_theme' };
     
     const escapeHtml = (text) => { if (text === undefined || text === null) return ''; const div = document.createElement('div'); div.textContent = String(text); return div.innerHTML; };
     
@@ -287,7 +288,6 @@
         try {
             let cfg = JSON.parse(json), added = 0;
             
-            // Расы с типом
             if (cfg.races && Array.isArray(cfg.races)) {
                 let select = document.getElementById('race');
                 for (let it of cfg.races) {
@@ -301,7 +301,6 @@
                 }
             }
             
-            // Стили с реализмом
             if (cfg.styles && Array.isArray(cfg.styles)) {
                 let select = document.getElementById('style');
                 for (let it of cfg.styles) {
@@ -315,7 +314,6 @@
                 }
             }
             
-            // Доп черты с анатомией
             if (cfg.extraTraits && Array.isArray(cfg.extraTraits)) {
                 for (let it of cfg.extraTraits) {
                     if (addOptionToGroup('extraTraits', it)) {
@@ -328,7 +326,6 @@
                 }
             }
             
-            // Остальные группы чекбоксов
             for (let groupId of checkboxGroups) {
                 if (groupId === 'extraTraits') continue;
                 if (cfg[groupId] && Array.isArray(cfg[groupId])) {
@@ -336,7 +333,6 @@
                 }
             }
             
-            // Селекты без метаданных
             const selectMap = {poses:'pose', tops:'top', bottoms:'bottom', footwear:'footwear', bodyTypes:'bodyType', muscles:'muscles', clarity:'clarity', framing:'framing', lighting:'lighting', backgrounds:'background'};
             for (let jk in selectMap) {
                 if (cfg[jk] && Array.isArray(cfg[jk])) {
@@ -419,7 +415,6 @@
             document.getElementById('pose')?.value, document.getElementById('bodyType')?.value
         ].filter(Boolean);
         
-        // Правило 1: конфликт расы и анатомии
         if (raceType === 'humanoid' && (mlpAnatomy || feralAnatomy)) {
             warnings.push('Человеческая раса несовместима с анатомией MLP/ферала. Галочки сняты.');
             document.getElementById('mlpAnatomy').checked = false;
@@ -434,12 +429,10 @@
             document.getElementById('mlpAnatomy').checked = false;
         }
         
-        // Правило 2: стиль реализма
         if ((raceType === 'pony' || raceType === 'feral') && styleRealism > 0.7) {
             warnings.push(`Для ${raceType === 'pony' ? 'пони' : 'фералов'} не рекомендуется фотореализм. Лучше аниме/хентай/цифровой стиль.`);
         }
         
-        // Правило 3: одежда на фералах
         if (raceType === 'feral') {
             const top = document.getElementById('top')?.value;
             const bottom = document.getElementById('bottom')?.value;
@@ -449,13 +442,11 @@
             if (footwear && footwear !== '— загрузите мод —') warnings.push('Обувь для фералов обычно не используется.');
         }
         
-        // Правило 4: запрещённые теги PW
         const bannedPatterns = [/loli/i, /child/i, /shota/i, /underage/i, /rape/i, /nonconsent/i, /incest/i];
         for (let tag of allSelectedTags) {
             if (bannedPatterns.some(p => p.test(tag))) warnings.push(`Тег "${tag}" может привести к блокировке на PornWorks.`);
         }
         
-        // Правило 5: аликорн + ферал
         if (extraTraits.some(t => t.includes('alicorn')) && feralAnatomy) {
             warnings.push('Аликорн — это пони, ферал анатомия конфликтует.');
             document.getElementById('feralAnatomy').checked = false;
@@ -474,88 +465,166 @@
     }
     
     function buildPrompt() {
-        // Валидация + отображение предупреждений
         const warnings = validatePromptCompatibility();
         displayWarnings(warnings);
         fixAnatomyConflict();
-        
-        let parts = [], sep = document.getElementById('separator')?.value || ', ';
-        let isPWMode = document.getElementById('pornworksMode')?.checked;
-        
-        let race = document.getElementById('race')?.value;
-        if (race) parts.push(race);
-        
-        let extra = getSelectedCheckboxValues('extraTraits');
-        if (extra.length) parts.push(extra.join(' '));
-        
-        if (document.getElementById('mlpAnatomy')?.checked) parts.push('equine anatomy', 'pony body');
-        if (document.getElementById('feralAnatomy')?.checked) parts.push('feral anatomy');
-        
-        let top = document.getElementById('top')?.value;
-        let bottom = document.getElementById('bottom')?.value;
-        let foot = document.getElementById('footwear')?.value;
-        if (top && top !== '— загрузите мод —') parts.push(top);
-        if (bottom && bottom !== '— загрузите мод —') parts.push(bottom);
-        if (foot && foot !== '— загрузите мод —') parts.push(foot);
-        let acc = getSelectedCheckboxValues('accessories');
-        if (acc.length) parts.push(acc.join(' '));
-        
-        parts.push(getBreastTag(parseInt(document.getElementById('breast')?.value || 3)));
-        parts.push(getButtTag(parseInt(document.getElementById('butt')?.value || 3)));
-        let body = document.getElementById('bodyType')?.value;
-        if (body) parts.push(body);
-        
-        ['hair', 'eyes', 'skin', 'tattoos'].forEach(g => {
-            let vals = getSelectedCheckboxValues(g);
-            if (vals.length) parts.push(vals.join(' '));
-        });
-        
-        let action = getSelectedCheckboxValues('action');
-        let pose = document.getElementById('pose')?.value;
-        if (action.length) parts.push(action.join(' '));
-        else if (pose) parts.push(pose);
-        
-        let expr = getSelectedCheckboxValues('expression');
-        let angle = getSelectedCheckboxValues('angle');
-        let eff = getSelectedCheckboxValues('effects');
-        if (expr.length) parts.push(expr.join(' '));
-        if (angle.length) parts.push(angle.join(' '));
-        if (eff.length) parts.push(eff.join(' '));
-        
-        let style = document.getElementById('style')?.value;
-        let clarity = document.getElementById('clarity')?.value;
-        let framing = document.getElementById('framing')?.value;
-        let light = document.getElementById('lighting')?.value;
-        let bg = document.getElementById('background')?.value;
-        
-        if (isPWMode) {
-            if (!style) style = 'photorealistic';
-            if (!clarity) clarity = 'masterpiece, best quality, ultra high res, 8K, sharp focus';
-            if (!light) light = 'soft studio lighting';
-        }
-        
-        if (style) parts.push(style);
-        if (clarity) parts.push(clarity);
-        if (framing) parts.push(framing);
-        if (light) parts.push(light);
-        if (bg) parts.push(bg);
-        
-        let filtered = parts.filter(p => p && p.trim() !== '');
-        let prompt = filtered.join(isPWMode ? ', ' : sep);
-        
-        if (!isPWMode) {
-            let prefix = document.getElementById('fixedPrefixTags')?.value.trim();
-            let suffix = document.getElementById('fixedSuffixTags')?.value.trim();
-            if (prefix) prompt = prefix + sep + prompt;
-            if (suffix) prompt = prompt + sep + suffix;
+    
+        const isSDXL = document.getElementById('sdxlMode')?.checked;
+        const sep = isSDXL ? ', ' : (document.getElementById('separator')?.value || ', ');
+    
+        const race = document.getElementById('race')?.value;
+        const extra = getSelectedCheckboxValues('extraTraits');
+        const mlpAnatomy = document.getElementById('mlpAnatomy')?.checked;
+        const feralAnatomy = document.getElementById('feralAnatomy')?.checked;
+    
+        const top = document.getElementById('top')?.value;
+        const bottom = document.getElementById('bottom')?.value;
+        const foot = document.getElementById('footwear')?.value;
+        const acc = getSelectedCheckboxValues('accessories');
+    
+        const breastVal = document.getElementById('breast')?.value || 3;
+        const buttVal = document.getElementById('butt')?.value || 3;
+        const breastWeight = parseFloat(document.getElementById('weightBreast')?.value || 1.2);
+        const buttWeight = parseFloat(document.getElementById('weightButt')?.value || 1.2);
+        const bodyType = document.getElementById('bodyType')?.value;
+    
+        const hair = getSelectedCheckboxValues('hair');
+        const eyes = getSelectedCheckboxValues('eyes');
+        const skin = getSelectedCheckboxValues('skin');
+        const tattoos = getSelectedCheckboxValues('tattoos');
+        const muscles = document.getElementById('muscles')?.value;
+    
+        const action = getSelectedCheckboxValues('action');
+        const pose = document.getElementById('pose')?.value;
+        const expression = getSelectedCheckboxValues('expression');
+        const angle = getSelectedCheckboxValues('angle');
+        const effects = getSelectedCheckboxValues('effects');
+    
+        const style = document.getElementById('style')?.value;
+        const clarity = document.getElementById('clarity')?.value;
+        const framing = document.getElementById('framing')?.value;
+        const light = document.getElementById('lighting')?.value;
+        const bg = document.getElementById('background')?.value;
+    
+        let prompt = '';
+    
+        if (isSDXL) {
+            let parts = [];
+    
+            const qualityBase = clarity || 'masterpiece, best quality, ultra high res, 8K, sharp focus';
+            if (qualityBase) parts.push(qualityBase);
+    
+            let subject = race || 'a woman';
+            if (subject) parts.push(subject);
+    
+            if (mlpAnatomy) parts.push('equine anatomy, pony body');
+            if (feralAnatomy) parts.push('feral anatomy');
+    
+            let appearance = [];
+            if (hair.length) appearance.push(hair.join(', '));
+            if (eyes.length) appearance.push(eyes.join(', '));
+            if (skin.length) appearance.push(skin.join(', '));
+            if (tattoos.length) appearance.push('with ' + tattoos.join(', '));
+            if (extra.length) appearance.push('with ' + extra.join(', '));
+            if (appearance.length) parts.push(appearance.join(', '));
+    
+            const breastTag = getBreastTag(breastVal);
+            const buttTag = getButtTag(buttVal);
+            let bodyDesc = [];
+            if (bodyType) bodyDesc.push(bodyType);
+            bodyDesc.push(`(${breastTag}:${breastWeight.toFixed(1)})`);
+            bodyDesc.push(`(${buttTag}:${buttWeight.toFixed(1)})`);
+            if (muscles) bodyDesc.push(muscles);
+            parts.push(bodyDesc.join(', '));
+    
+            let clothing = [];
+            if (top && top !== '— загрузите мод —') clothing.push(top);
+            if (bottom && bottom !== '— загрузите мод —') clothing.push(bottom);
+            if (foot && foot !== '— загрузите мод —') clothing.push(foot);
+            if (acc.length) clothing.push(acc.join(', '));
+            if (clothing.length) parts.push('wearing ' + clothing.join(' and '));
+    
+            let actionPose = action.length ? action.join(', ') : pose;
+            if (actionPose) parts.push(actionPose);
+    
+            if (expression.length) parts.push(expression.join(', '));
+            if (angle.length) parts.push('seen from ' + angle.join(', '));
+            if (effects.length) parts.push('with ' + effects.join(', '));
+    
+            let environment = [];
+            if (style) environment.push(style);
+            if (light) environment.push(light);
+            if (bg) environment.push(bg);
+            if (environment.length) parts.push(environment.join(', '));
+            if (framing) parts.push(framing);
+    
+            prompt = parts.filter(p => p).join(', ');
+    
         } else {
-            if (!prompt.startsWith('masterpiece')) prompt = 'masterpiece, best quality, ultra high res, ' + prompt;
+            let parts = [];
+            let isPWMode = document.getElementById('pornworksMode')?.checked;
+    
+            if (race) parts.push(race);
+            if (extra.length) parts.push(extra.join(' '));
+            if (mlpAnatomy) parts.push('equine anatomy', 'pony body');
+            if (feralAnatomy) parts.push('feral anatomy');
+    
+            if (top && top !== '— загрузите мод —') parts.push(top);
+            if (bottom && bottom !== '— загрузите мод —') parts.push(bottom);
+            if (foot && foot !== '— загрузите мод —') parts.push(foot);
+            if (acc.length) parts.push(acc.join(' '));
+    
+            parts.push(getBreastTag(parseInt(breastVal)));
+            parts.push(getButtTag(parseInt(buttVal)));
+            if (bodyType) parts.push(bodyType);
+    
+            if (hair.length) parts.push(hair.join(' '));
+            if (eyes.length) parts.push(eyes.join(' '));
+            if (skin.length) parts.push(skin.join(' '));
+            if (tattoos.length) parts.push(tattoos.join(' '));
+    
+            let actionPart = action.length ? action.join(' ') : pose;
+            if (actionPart) parts.push(actionPart);
+    
+            if (expression.length) parts.push(expression.join(' '));
+            if (angle.length) parts.push(angle.join(' '));
+            if (effects.length) parts.push(effects.join(' '));
+    
+            if (style) parts.push(style);
+            if (clarity) parts.push(clarity);
+            if (framing) parts.push(framing);
+            if (light) parts.push(light);
+            if (bg) parts.push(bg);
+    
+            let filtered = parts.filter(p => p && p.trim() !== '');
+            let promptStr = filtered.join(isPWMode ? ', ' : sep);
+    
+            if (!isPWMode) {
+                let prefix = document.getElementById('fixedPrefixTags')?.value.trim();
+                let suffix = document.getElementById('fixedSuffixTags')?.value.trim();
+                if (prefix) promptStr = prefix + sep + promptStr;
+                if (suffix) promptStr = promptStr + sep + suffix;
+            } else {
+                if (!promptStr.startsWith('masterpiece')) {
+                    promptStr = 'masterpiece, best quality, ultra high res, ' + promptStr;
+                }
+            }
+            prompt = promptStr.replace(/, ,/g, ',').replace(/,\s*,/g, ',').trim();
         }
-        
-        return prompt.replace(/, ,/g, ',').replace(/,\s*,/g, ',').trim() || '';
+    
+        return prompt || '';
     }
     
-    function buildNegative() { let neg = ["blur", "soft focus", "low resolution", "bad anatomy", "deformed", "ugly", "worst quality"]; if (document.getElementById('fixHands')?.checked) neg.push("bad hands", "extra fingers"); if (document.getElementById('fixFace')?.checked) neg.push("weird eyes", "asymmetrical face"); if (document.getElementById('fixLimbs')?.checked) neg.push("extra limbs", "missing limbs"); if (document.getElementById('fixBody')?.checked) neg.push("bad proportions"); if (document.getElementById('noHumanParts')?.checked) neg.push("human hands", "human face"); return neg.join(', '); }
+    function buildNegative() {
+        let neg = ["lowres", "bad anatomy", "deformed", "ugly", "blurry", "soft focus", "worst quality"];
+        if (document.getElementById('fixHands')?.checked) neg.push("bad hands", "extra fingers", "missing fingers");
+        if (document.getElementById('fixFace')?.checked) neg.push("weird eyes", "asymmetrical face", "distorted face");
+        if (document.getElementById('fixLimbs')?.checked) neg.push("extra limbs", "missing limbs");
+        if (document.getElementById('fixBody')?.checked) neg.push("bad proportions", "fused body");
+        if (document.getElementById('noHumanParts')?.checked) neg.push("human hands", "human face", "human feet");
+        if (document.getElementById('sdxlMode')?.checked) neg.push("text", "watermark", "signature", "username");
+        return neg.join(', ');
+    }
     
     function debouncedUpdateUI() { if (updateTimer) clearTimeout(updateTimer); updateTimer = setTimeout(() => { updateUI(); updateTimer = null; }, 16); }
     
@@ -563,6 +632,8 @@
         let bl = ["плоская","оч.мал.","маленькая","средняя","большая","огромная"];
         let breastEl = document.getElementById('breast'); if (breastEl) document.getElementById('breastVal').textContent = bl[breastEl.value] || 'средняя';
         let buttEl = document.getElementById('butt'); if (buttEl) document.getElementById('buttVal').textContent = bl[buttEl.value] || 'средняя';
+        let wb = document.getElementById('weightBreast'); if (wb) document.getElementById('breastWeightVal').textContent = parseFloat(wb.value).toFixed(1);
+        let wbb = document.getElementById('weightButt'); if (wbb) document.getElementById('buttWeightVal').textContent = parseFloat(wbb.value).toFixed(1);
         let prompt = buildPrompt(); document.getElementById('promptResult').innerText = prompt || '(настройте параметры)';
         document.getElementById('negPromptText').innerText = buildNegative();
         if (document.getElementById('autoCopy')?.checked && prompt) { navigator.clipboard?.writeText(prompt).catch(()=>{}); }
@@ -591,7 +662,8 @@
         let settings = { version: VERSION, theme: document.body.classList.contains('light') ? 'light' : 'dark' };
         ['race', 'pose', 'bodyType', 'muscles', 'top', 'bottom', 'footwear', 'style', 'clarity', 'framing', 'lighting', 'background'].forEach(id => { let el = document.getElementById(id); if (el) settings[id] = el.value; });
         settings.breast = document.getElementById('breast')?.value; settings.butt = document.getElementById('butt')?.value;
-        ['mlpAnatomy', 'feralAnatomy', 'fixHands', 'fixFace', 'fixLimbs', 'fixBody', 'noHumanParts', 'strictSharpMode', 'autoCopy', 'saveSettings', 'pornworksMode'].forEach(id => { let el = document.getElementById(id); if (el) settings[id] = el.checked; });
+        settings.weightBreast = document.getElementById('weightBreast')?.value; settings.weightButt = document.getElementById('weightButt')?.value;
+        ['mlpAnatomy', 'feralAnatomy', 'fixHands', 'fixFace', 'fixLimbs', 'fixBody', 'noHumanParts', 'strictSharpMode', 'autoCopy', 'saveSettings', 'pornworksMode', 'sdxlMode'].forEach(id => { let el = document.getElementById(id); if (el) settings[id] = el.checked; });
         checkboxGroups.forEach(group => settings[group] = getSelectedCheckboxValues(group));
         settings.fixedPrefixTags = document.getElementById('fixedPrefixTags')?.value; settings.fixedSuffixTags = document.getElementById('fixedSuffixTags')?.value; settings.separator = document.getElementById('separator')?.value;
         return settings;
@@ -609,8 +681,8 @@
     function loadAllSettings() { let saved = localStorage.getItem(STORAGE_KEYS.SETTINGS); if (saved) { try { applySettings(JSON.parse(saved)); showToast('💾 Настройки загружены'); } catch(e) {} } }
     function saveTheme(theme) { localStorage.setItem(STORAGE_KEYS.THEME, theme); }
     function loadTheme() { let saved = localStorage.getItem(STORAGE_KEYS.THEME); if (saved === 'light') { document.body.classList.add('light'); document.getElementById('themeToggle').innerHTML = '🌙 Тёмная'; } }
-    function clearAll() { clearAllCheckboxes(); document.getElementById('breast').value = '3'; document.getElementById('butt').value = '3'; ['race', 'pose', 'bodyType', 'muscles', 'top', 'bottom', 'footwear', 'style', 'clarity', 'framing', 'lighting', 'background'].forEach(id => { let el = document.getElementById(id); if (el) el.value = ''; }); updateUI(); showToast('🧹 Очищено'); }
-    function randomize() { ['race','bodyType','style','background'].forEach(id => { let s = document.getElementById(id); if (s && s.options.length > 1) s.selectedIndex = Math.floor(Math.random() * (s.options.length - 1)) + 1; }); document.getElementById('breast').value = Math.floor(Math.random() * 6); document.getElementById('butt').value = Math.floor(Math.random() * 6); checkboxGroups.forEach(g => { let container = document.getElementById(g + 'Group'); if (container) container.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = Math.random() > 0.7); }); updateUI(); showToast('🎲 Случайно'); }
+    function clearAll() { clearAllCheckboxes(); document.getElementById('breast').value = '3'; document.getElementById('butt').value = '3'; document.getElementById('weightBreast').value = '1.2'; document.getElementById('weightButt').value = '1.2'; ['race', 'pose', 'bodyType', 'muscles', 'top', 'bottom', 'footwear', 'style', 'clarity', 'framing', 'lighting', 'background'].forEach(id => { let el = document.getElementById(id); if (el) el.value = ''; }); updateUI(); showToast('🧹 Очищено'); }
+    function randomize() { ['race','bodyType','style','background'].forEach(id => { let s = document.getElementById(id); if (s && s.options.length > 1) s.selectedIndex = Math.floor(Math.random() * (s.options.length - 1)) + 1; }); document.getElementById('breast').value = Math.floor(Math.random() * 6); document.getElementById('butt').value = Math.floor(Math.random() * 6); document.getElementById('weightBreast').value = (Math.random() * 1.5 + 0.5).toFixed(1); document.getElementById('weightButt').value = (Math.random() * 1.5 + 0.5).toFixed(1); checkboxGroups.forEach(g => { let container = document.getElementById(g + 'Group'); if (container) container.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = Math.random() > 0.7); }); updateUI(); showToast('🎲 Случайно'); }
     function exportSettings() { let a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(getAllSettings(), null, 2)], {type: 'application/json'})); a.download = `gpc_settings_v${VERSION}.json`; a.click(); showToast('💾 Экспорт'); }
     function importSettings(file) { let r = new FileReader(); r.onload = e => { try { applySettings(JSON.parse(e.target.result)); showToast('📂 Импорт'); } catch(ex) { alert('Ошибка файла'); } }; r.readAsText(file); }
     
@@ -624,11 +696,11 @@
     function buildDOM() {
         document.getElementById('generatorPanels').innerHTML = `
             <div class="grid">
-                <div class="card"><h3>👤 Персонаж</h3><label>Раса</label><select id="race"></select><div class="group-header"><label>Доп. черты</label><span><button type="button" class="select-all-btn" data-group="extraTraits">Все</button><button type="button" class="select-all-btn" data-group="extraTraits" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="extraTraits" data-action="invert">↔️</button></span></div><div id="extraTraitsGroup" class="checkbox-group"></div><label>Поза</label><select id="pose"></select></div>
-                <div class="card"><h3>🍑 Тело</h3><label>Грудь <span id="breastVal" class="range-value">средняя</span></label><input type="range" id="breast" min="0" max="5" value="3"><label>Задница <span id="buttVal" class="range-value">средняя</span></label><input type="range" id="butt" min="0" max="5" value="3"><label>Телосложение</label><select id="bodyType"></select><label>Мускулатура</label><select id="muscles"></select><hr><label><input type="checkbox" id="mlpAnatomy"> 🦄 MLP анатомия</label><label><input type="checkbox" id="feralAnatomy"> 🐺 Ферал анатомия</label></div>
+                <div class="card"><h3>👤 Персонаж</h3><label>Раса</label><select id="race"></select><div class="group-header"><label>Доп. черты</label><span><button type="button" class="select-all-btn" data-group="extraTraits">Все</button><button type="button" class="select-all-btn" data-group="extraTraits" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="extraTraits" data-action="invert">↔️</button></span></div><div id="extraTraitsGroup" class="checkbox-group"></div></div>
+                <div class="card"><h3>🍑 Тело</h3><label>Грудь <span id="breastVal" class="range-value">средняя</span></label><input type="range" id="breast" min="0" max="5" value="3"><label>Вес груди <span id="breastWeightVal" class="range-value">1.2</span></label><input type="range" id="weightBreast" min="0.5" max="2.0" step="0.1" value="1.2"><label>Задница <span id="buttVal" class="range-value">средняя</span></label><input type="range" id="butt" min="0" max="5" value="3"><label>Вес ягодиц <span id="buttWeightVal" class="range-value">1.2</span></label><input type="range" id="weightButt" min="0.5" max="2.0" step="0.1" value="1.2"><label>Телосложение</label><select id="bodyType"></select><label>Мускулатура</label><select id="muscles"></select><hr><label><input type="checkbox" id="mlpAnatomy"> 🦄 MLP анатомия</label><label><input type="checkbox" id="feralAnatomy"> 🐺 Ферал анатомия</label></div>
                 <div class="card"><h3>👗 Одежда</h3><label>Верх</label><select id="top"></select><label>Низ</label><select id="bottom"></select><label>Обувь</label><select id="footwear"></select><div class="group-header"><label>Аксессуары</label><span><button type="button" class="select-all-btn" data-group="accessories">Все</button><button type="button" class="select-all-btn" data-group="accessories" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="accessories" data-action="invert">↔️</button></span></div><div id="accessoriesGroup" class="checkbox-group"></div></div>
                 <div class="card"><h3>🎨 Внешность</h3><div class="group-header"><label>Волосы</label><span><button type="button" class="select-all-btn" data-group="hair">Все</button><button type="button" class="select-all-btn" data-group="hair" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="hair" data-action="invert">↔️</button></span></div><div id="hairGroup" class="checkbox-group"></div><div class="group-header"><label>Глаза</label><span><button type="button" class="select-all-btn" data-group="eyes">Все</button><button type="button" class="select-all-btn" data-group="eyes" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="eyes" data-action="invert">↔️</button></span></div><div id="eyesGroup" class="checkbox-group"></div><div class="group-header"><label>Кожа</label><span><button type="button" class="select-all-btn" data-group="skin">Все</button><button type="button" class="select-all-btn" data-group="skin" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="skin" data-action="invert">↔️</button></span></div><div id="skinGroup" class="checkbox-group"></div><div class="group-header"><label>Тату/шрамы</label><span><button type="button" class="select-all-btn" data-group="tattoos">Все</button><button type="button" class="select-all-btn" data-group="tattoos" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="tattoos" data-action="invert">↔️</button></span></div><div id="tattoosGroup" class="checkbox-group"></div></div>
-                <div class="card"><h3>🔥 Действие</h3><div class="group-header"><label>Секс. действие</label><span><button type="button" class="select-all-btn" data-group="action">Все</button><button type="button" class="select-all-btn" data-group="action" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="action" data-action="invert">↔️</button></span></div><div id="actionGroup" class="checkbox-group"></div><div class="group-header"><label>Выражение</label><span><button type="button" class="select-all-btn" data-group="expression">Все</button><button type="button" class="select-all-btn" data-group="expression" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="expression" data-action="invert">↔️</button></span></div><div id="expressionGroup" class="checkbox-group"></div><div class="group-header"><label>Ракурс</label><span><button type="button" class="select-all-btn" data-group="angle">Все</button><button type="button" class="select-all-btn" data-group="angle" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="angle" data-action="invert">↔️</button></span></div><div id="angleGroup" class="checkbox-group"></div><div class="group-header"><label>Эффекты</label><span><button type="button" class="select-all-btn" data-group="effects">Все</button><button type="button" class="select-all-btn" data-group="effects" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="effects" data-action="invert">↔️</button></span></div><div id="effectsGroup" class="checkbox-group"></div></div>
+                <div class="card"><h3>🔥 Действие</h3><div class="group-header"><label>Секс. действие</label><span><button type="button" class="select-all-btn" data-group="action">Все</button><button type="button" class="select-all-btn" data-group="action" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="action" data-action="invert">↔️</button></span></div><div id="actionGroup" class="checkbox-group"></div><label>Поза</label><select id="pose"></select><div class="group-header"><label>Выражение</label><span><button type="button" class="select-all-btn" data-group="expression">Все</button><button type="button" class="select-all-btn" data-group="expression" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="expression" data-action="invert">↔️</button></span></div><div id="expressionGroup" class="checkbox-group"></div><div class="group-header"><label>Ракурс</label><span><button type="button" class="select-all-btn" data-group="angle">Все</button><button type="button" class="select-all-btn" data-group="angle" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="angle" data-action="invert">↔️</button></span></div><div id="angleGroup" class="checkbox-group"></div><div class="group-header"><label>Эффекты</label><span><button type="button" class="select-all-btn" data-group="effects">Все</button><button type="button" class="select-all-btn" data-group="effects" data-action="none">Нет</button><button type="button" class="select-all-btn invert-btn" data-group="effects" data-action="invert">↔️</button></span></div><div id="effectsGroup" class="checkbox-group"></div></div>
                 <div class="card"><h3>🎬 Техника</h3><label>Стиль</label><select id="style"></select><label>Чёткость</label><select id="clarity"></select><label>Кадрирование</label><select id="framing"></select><label>Освещение</label><select id="lighting"></select><label>Фон</label><select id="background"></select></div>
             </div>
             <div class="grid" style="margin-top:1rem;">
@@ -658,11 +730,11 @@
         document.getElementById('resetAllSettingsBtn').addEventListener('click', () => { if (confirm('Сбросить ВСЕ сохранения?')) { localStorage.clear(); location.reload(); } });
         document.getElementById('mlpAnatomy').addEventListener('change', function() { if (this.checked) document.getElementById('feralAnatomy').checked = false; debouncedUpdateUI(); });
         document.getElementById('feralAnatomy').addEventListener('change', function() { if (this.checked) document.getElementById('mlpAnatomy').checked = false; debouncedUpdateUI(); });
-        ['breast', 'butt', 'race', 'pose', 'bodyType', 'muscles', 'top', 'bottom', 'footwear', 'style', 'clarity', 'framing', 'lighting', 'background', 'fixHands', 'fixFace', 'fixLimbs', 'fixBody', 'noHumanParts', 'strictSharpMode', 'autoCopy', 'pornworksMode', 'fixedPrefixTags', 'fixedSuffixTags', 'separator'].forEach(id => { let el = document.getElementById(id); if (el) el.addEventListener('input', () => debouncedUpdateUI()); });
+        ['breast', 'butt', 'weightBreast', 'weightButt', 'race', 'pose', 'bodyType', 'muscles', 'top', 'bottom', 'footwear', 'style', 'clarity', 'framing', 'lighting', 'background', 'fixHands', 'fixFace', 'fixLimbs', 'fixBody', 'noHumanParts', 'strictSharpMode', 'autoCopy', 'pornworksMode', 'sdxlMode', 'fixedPrefixTags', 'fixedSuffixTags', 'separator'].forEach(id => { let el = document.getElementById(id); if (el) el.addEventListener('input', () => debouncedUpdateUI()); });
         checkboxGroups.forEach(group => { let container = document.getElementById(group + 'Group'); if (container) container.addEventListener('change', () => debouncedUpdateUI()); });
         document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
         loadAllSettings(); switchTab('anthro'); updateUI();
-        showToast(`✅ v${VERSION} — УМНАЯ ВАЛИДАЦИЯ АКТИВНА`, 3000);      
+        showToast(`✅ v${VERSION} — SDXL + ВАЛИДАЦИЯ ГОТОВЫ`, 3000);      
     }
     
     init();
